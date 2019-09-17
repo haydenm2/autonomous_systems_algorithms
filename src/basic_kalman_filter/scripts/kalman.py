@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import control as ct
 
 # Generic Kalman Filter Approach (From Probablistic Robotics)
 #
@@ -14,45 +15,56 @@ import numpy as np
 #
 
 class Kalman:
-    def __init__(self,A,B,C,D,cov,Q):
-        self.t = 0                   #time iterator
+    def __init__(self,A,B,C,R,Q):
         self.nx = np.size(A,axis=0)   #number of state variables
-        self.nu = np.size(D,axis=1)   #number of input types
+        self.nu = np.size(B,axis=1)   #number of input types
         self.nz = np.size(C,axis=0)   #number of measurement types
-        self.ind = 0                 #history iterator
-        self.u = np.array([])        #input command history
-        self.z = np.array([])        #measurement history
-        self.mu = np.zeros(n)        #state vector
-        self.mu_bar = np.zeros(n)    #state prediction vector
-        self.cov = np.zeros(shape=(n,n)) #covariance 
-        self.cov_bar = np.zeros(shape=(n,n)) #covariance prediction
+        self.u = np.zeros([self.nu,1])        #input command history
+        self.z = np.zeros([self.nz,1])        #measurement history
+        self.mu = np.zeros([self.nx,1])        #state mean vector
+        self.mu_bar = self.mu        #state mean prediction vector
+        self.R = R                   #process covariance 
+        self.Q = Q                   #measurement covariance 
+        self.cov = np.eye(self.nx)         #state covariance
+        self.cov_bar = self.cov      #state covariance prediction
+        self.K = np.zeros([self.nx,self.nz])   #kalman gains
+        self.A = A
+        self.B = B
+        self.C = C
         pass
 
     def Execute(self,u,z):
-        self.
-        self.PredictState()
+        self.PredictState(u)
         self.PredictCovariance()
         self.UpdateGains()
-        self.UpdateState()
+        self.UpdateState(z)
         self.UpdateCovariance()
         pass
 
     def Update(self):
         pass
     
-    def PredictState(self):
+    def PredictState(self,u):
+        self.mu_bar = np.dot(self.A,self.mu)+np.dot(self.B,u)
         pass
 
     def PredictCovariance(self):
+        self.cov_bar = np.dot(self.A,np.dot(self.cov,self.A.transpose()))+self.R
         pass
     
     def UpdateGains(self):
+        temp = np.linalg.inv(np.dot(self.C,np.dot(self.cov_bar,self.C.transpose()))+self.Q)
+        self.K = np.dot(self.cov_bar,np.dot(self.C.transpose(),temp))
         pass
 
-    def UpdateState(self):
+    def UpdateState(self,z):
+        temp = z - np.dot(self.C,self.mu_bar)
+        self.mu = self.mu_bar+np.dot(self.K,temp)
         pass
     
     def UpdateCovariance(self):
+        temp = np.eye(self.nx)-np.dot(self.K,self.C)
+        self.cov = np.dot(temp,self.cov_bar)
         pass
 
     

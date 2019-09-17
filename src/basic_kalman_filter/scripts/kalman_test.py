@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 from kalman import Kalman
+import numpy as np
+import control as ct
+import matplotlib as plot
 # ------------------------------------------------------------------
 # Summary:
 # Example of implementation of kalman class on a simple Unmanned Underwater Vehicle (UUV) system defined by:
@@ -31,5 +34,61 @@ from kalman import Kalman
 #
 
 if(__name__ == "__main__"):
-    AUV = Kalman()
 
+    #Model parameters
+    m = 100
+    b = 20
+    dt = 0.05
+    R = np.array([[0.01,0],[0,0.0001]])
+    Q = np.array([0.001])
+
+    #plot data containers
+    x = np.zeros([(int)(50/dt)+1,2])
+    z = np.zeros([(int)(50/dt)+1,2])
+    
+    #random noise variables
+    epsilon = np.random.multivariate_normal([0,0],R.tolist())
+    delta = np.random.normal([0],Q.tolist())
+
+    #state space model
+    A = np.array([[-b/m,0],[0,1]])
+    B = np.array([[1],[0]])
+    C = np.array([0,1])
+    D = np.array(0)
+    sys = ct.ss(A,B,C,D)
+    sysd = ct.c2d(sys,dt)
+
+    #Kalman Filter Init
+    UUV = Kalman(sysd.A,sysd.B,sysd.C,R,Q)
+
+    #Kalman Filter Test
+    UUV.Execute(np.array(50),np.array(0))
+
+    #Input Command Simulation
+    F = np.zeros([(int)(50/dt)])
+    for t in range((int)(50/dt)):
+        if(t<(int)(5/dt)):
+            F[t] = 50
+        elif(t<(int)(25/dt)):
+            F[t] = 0
+        elif(t<(int)(30/dt)):
+            F[t] = -50
+        else:
+            F[t] = 0
+
+        x[t+1] = sysd.A.dot(x[t].transpose())+sysd.B.dot(F[t]).transpose()+epsilon
+        print("xt+1")
+        print(x[t+1])
+        print("C")
+        print(sysd.C)
+        print("xt")
+        print(x[t])
+        print("C*xt")
+        print(sysd.C.dot(x[t]))
+        print("delta")
+        print(delta)
+        z[t+1] = sysd.C.dot(x[t])+delta
+        print("zt+1")
+        print(z[t+1])
+
+        UUV.Execute(np.array([F[i]]),z[t+1])
