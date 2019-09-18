@@ -19,9 +19,9 @@ class Kalman:
         self.nx = np.size(A,axis=0)   #number of state variables
         self.nu = np.size(B,axis=1)   #number of input types
         self.nz = np.size(C,axis=0)   #number of measurement types
-        self.u = np.zeros([self.nu,1])        #input command history
-        self.z = np.zeros([self.nz,1])        #measurement history
-        self.mu = np.zeros([self.nx,1])        #state mean vector
+        self.u = np.zeros(self.nu)        #input command history
+        self.z = np.zeros(self.nz)        #measurement history
+        self.mu = np.zeros(self.nx)        #state mean vector
         self.mu_bar = self.mu        #state mean prediction vector
         self.R = R                   #process covariance 
         self.Q = Q                   #measurement covariance 
@@ -45,7 +45,7 @@ class Kalman:
         pass
     
     def PredictState(self,u):
-        self.mu_bar = np.dot(self.A,self.mu)+np.dot(self.B,u)
+        self.mu_bar = self.A.dot(self.mu.transpose())+self.B.dot(u)
         pass
 
     def PredictCovariance(self):
@@ -58,8 +58,14 @@ class Kalman:
         pass
 
     def UpdateState(self,z):
-        temp = z - np.dot(self.C,self.mu_bar)
-        self.mu = self.mu_bar+np.dot(self.K,temp)
+        print("self.mu: \n",self.mu)
+        print("self.C: \n",self.C)
+        print("self.mu_bar: \n",self.mu_bar)
+        temp = z - np.dot(self.C,self.mu_bar.transpose())
+        print("temp: \n",temp)
+        self.mu = self.mu_bar+np.dot(self.K,temp).transpose()
+        print("self.K: \n",self.K)
+        print("np.dot(self.K,temp): \n",np.dot(self.K,temp))
         pass
     
     def UpdateCovariance(self):
