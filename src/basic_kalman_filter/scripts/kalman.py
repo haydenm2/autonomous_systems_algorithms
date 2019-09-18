@@ -19,9 +19,9 @@ class Kalman:
         self.nx = np.size(A,axis=0)   #number of state variables
         self.nu = np.size(B,axis=1)   #number of input types
         self.nz = np.size(C,axis=0)   #number of measurement types
-        self.u = np.zeros(self.nu)        #input command history
-        self.z = np.zeros(self.nz)        #measurement history
-        self.mu = np.zeros(self.nx)        #state mean vector
+        self.u = np.zeros([self.nu,1])        #input command history
+        self.z = np.zeros([self.nz,1])        #measurement history
+        self.mu = np.zeros([self.nx,1])        #state mean vector
         self.mu_bar = self.mu        #state mean prediction vector
         self.R = R                   #process covariance 
         self.Q = Q                   #measurement covariance 
@@ -45,32 +45,28 @@ class Kalman:
         pass
     
     def PredictState(self,u):
-        self.mu_bar = self.A.dot(self.mu.transpose())+self.B.dot(u)
+        test1 = self.A @ self.mu
+        test2 = (self.B @ u).transpose()
+        self.mu_bar = self.A @ self.mu + (self.B @ u).transpose()
         pass
 
     def PredictCovariance(self):
-        self.cov_bar = np.dot(self.A,np.dot(self.cov,self.A.transpose()))+self.R
+        self.cov_bar = self.A @ (self.cov @ self.A.transpose()) + self.R
         pass
     
     def UpdateGains(self):
-        temp = np.linalg.inv(np.dot(self.C,np.dot(self.cov_bar,self.C.transpose()))+self.Q)
-        self.K = np.dot(self.cov_bar,np.dot(self.C.transpose(),temp))
+        temp = np.linalg.inv(self.C @ (self.cov_bar @ self.C.transpose()) + self.Q)
+        self.K = self.cov_bar @ (self.C.transpose() @ temp)
         pass
 
     def UpdateState(self,z):
-        print("self.mu: \n",self.mu)
-        print("self.C: \n",self.C)
-        print("self.mu_bar: \n",self.mu_bar)
-        temp = z - np.dot(self.C,self.mu_bar.transpose())
-        print("temp: \n",temp)
-        self.mu = self.mu_bar+np.dot(self.K,temp).transpose()
-        print("self.K: \n",self.K)
-        print("np.dot(self.K,temp): \n",np.dot(self.K,temp))
+        temp = z - self.C @ self.mu_bar
+        self.mu = self.mu_bar + self.K @ temp
         pass
     
     def UpdateCovariance(self):
-        temp = np.eye(self.nx)-np.dot(self.K,self.C)
-        self.cov = np.dot(temp,self.cov_bar)
+        temp = np.eye(self.nx) - self.K @ self.C
+        self.cov = temp @ self.cov_bar
         pass
 
     

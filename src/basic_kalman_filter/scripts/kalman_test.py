@@ -77,13 +77,9 @@ if(__name__ == "__main__"):
         else:
             F[t] = 0
 
-        x[t+1] = sysd.A.dot(x[t])+sysd.B.dot(F[t]).transpose()
-        print("t: \n",t*0.05)
-        print("x: \n",x[t+1])
-        z[t+1] = sysd.C.dot(x[t])+delta
-        print("z: \n",z[t+1])
+        x[t+1] = sysd.A @ x[t] + sysd.B @ (np.array([F[t]]).transpose())
+        z[t+1] = sysd.C @ x[t] + delta
 
         UUV.Execute(np.array([F[t]]),z[t+1])
-        mu[t+1] = UUV.mu
-        print("mu: \n",mu[t+1])
-        print('')
+        mu[t+1] = (UUV.mu).transpose()
+
