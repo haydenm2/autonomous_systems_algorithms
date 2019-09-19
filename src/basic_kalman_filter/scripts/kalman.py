@@ -33,7 +33,7 @@ class Kalman:
         self.B = B                                  # discrete state B-matrix
         self.C = C                                  # discrete measurement C-matrix
 
-    def Execute(self, u, z):
+    def Propogate(self, u, z):
         self.PredictState(u)
         self.PredictCovariance()
         self.UpdateGains()
