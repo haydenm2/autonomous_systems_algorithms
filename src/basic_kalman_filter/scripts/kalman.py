@@ -14,14 +14,15 @@ import control as ct
 #   return (mu_t, cov_t)
 #
 
+
 class Kalman:
-    def __init__(self,A,B,C,R,Q):
-        self.nx = np.size(A,axis=0)   #number of state variables
-        self.nu = np.size(B,axis=1)   #number of input types
-        self.nz = np.size(C,axis=0)   #number of measurement types
-        self.u = np.zeros([self.nu,1])        #input command history
-        self.z = np.zeros([self.nz,1])        #measurement history
-        self.mu = np.zeros([self.nx,1])        #state mean vector
+    def __init__(self, A, B, C, R, Q):
+        self.nx = np.size(A, axis=0)   #number of state variables
+        self.nu = np.size(B, axis=1)   #number of input types
+        self.nz = np.size(C, axis=0)   #number of measurement types
+        self.u = np.zeros([self.nu, 1])        #input command history
+        self.z = np.zeros([self.nz, 1])        #measurement history
+        self.mu = np.zeros([self.nx, 1])        #state mean vector
         self.mu_bar = self.mu        #state mean prediction vector
         self.R = R                   #process covariance 
         self.Q = Q                   #measurement covariance 
@@ -31,42 +32,28 @@ class Kalman:
         self.A = A
         self.B = B
         self.C = C
-        pass
 
-    def Execute(self,u,z):
+    def Execute(self, u, z):
         self.PredictState(u)
         self.PredictCovariance()
         self.UpdateGains()
         self.UpdateState(z)
         self.UpdateCovariance()
-        pass
 
-    def Update(self):
-        pass
-    
-    def PredictState(self,u):
-        test1 = self.A @ self.mu
-        test2 = (self.B @ u).transpose()
+    def PredictState(self, u):
         self.mu_bar = self.A @ self.mu + (self.B @ u).transpose()
-        pass
 
     def PredictCovariance(self):
         self.cov_bar = self.A @ (self.cov @ self.A.transpose()) + self.R
-        pass
-    
+
     def UpdateGains(self):
         temp = np.linalg.inv(self.C @ (self.cov_bar @ self.C.transpose()) + self.Q)
         self.K = self.cov_bar @ (self.C.transpose() @ temp)
-        pass
 
-    def UpdateState(self,z):
+    def UpdateState(self, z):
         temp = z - self.C @ self.mu_bar
         self.mu = self.mu_bar + self.K @ temp
-        pass
-    
+
     def UpdateCovariance(self):
         temp = np.eye(self.nx) - self.K @ self.C
         self.cov = temp @ self.cov_bar
-        pass
-
-    
