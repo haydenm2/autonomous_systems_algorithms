@@ -31,8 +31,6 @@ import matplotlib.pyplot as plt
 # - Position and velocity states and estimates vs time
 # - Estimation error and error covariance vs time
 # - Kalman gains vs time
-#
-#
 
 if __name__ == "__main__":
 
@@ -51,10 +49,6 @@ if __name__ == "__main__":
     two_sig_x = np.zeros([int(50 / dt) + 1, 2])
     mu = np.zeros([int(50 / dt) + 1, 2])
     K = np.zeros([int(50 / dt) + 1, 2])
-
-    # random noise variables
-    epsilon = np.random.multivariate_normal([0, 0], (np.sqrt(R)).tolist())
-    delta = np.random.normal([0], Q.tolist())
 
     # state space model
     A = np.array([[-b / m, 0], [1, 0]])
@@ -79,8 +73,12 @@ if __name__ == "__main__":
         else:
             F[i] = 0
 
+        # random noise variables
+        epsilon = np.array([np.sqrt(R.item((0, 0))) * np.random.randn(), np.sqrt(R.item((1, 1))) * np.random.randn()])
+        delta = np.array(np.sqrt(Q) * np.random.randn())
+
         t[i + 1] = i * dt
-        x[i + 1] = sysd.A @ x[i] + sysd.B @ (np.array([F[i]]).transpose())
+        x[i + 1] = sysd.A @ x[i] + sysd.B @ (np.array([F[i]]).transpose()) + epsilon
         z[i + 1] = sysd.C @ x[i] + delta
 
         UUV.Execute(np.array([F[i]]), z[i + 1])
@@ -95,6 +93,8 @@ if __name__ == "__main__":
     xe = (mu.transpose())[1, :]  # position estimation
     vt = (x.transpose())[0, :]  # velocity truth
     xt = (x.transpose())[1, :]  # position truth
+    verr = ve-vt  # velocity error
+    xerr = xe-xt  # position error
 
     vc_upper = (two_sig_v.transpose())[0, :]  # velocity two sigma covariance upper bound
     vc_lower = (two_sig_v.transpose())[1, :]  # velocity two sigma covariance lower bound
@@ -110,6 +110,7 @@ if __name__ == "__main__":
     plt.plot(t, ve, 'm-', label='Velocity Estimate')
     plt.plot(t, xt, 'b-', label='Position Truth')
     plt.plot(t, vt, 'r-', label='Velocity Truth')
+    plt.plot(t, z, 'g--', label='Position Measurement')
     plt.ylabel('mu')
     plt.xlabel('t (s)')
     plt.title('States and State Estimates')
@@ -118,13 +119,15 @@ if __name__ == "__main__":
 
     # plot covariance convergence of states
     plt.figure(2)
+    plt.plot(t, verr, 'm-', label='Velocity Error')
+    plt.plot(t, xerr, 'c-', label='Position Error')
     plt.plot(t, vc_upper, 'r--', label='Velocity Covariance Bounds')
     plt.plot(t, vc_lower, 'r--')
-    plt.plot(t, xc_upper, 'm--', label='Position Covariance Bounds')
-    plt.plot(t, xc_lower, 'm--')
+    plt.plot(t, xc_upper, 'b--', label='Position Covariance Bounds')
+    plt.plot(t, xc_lower, 'b--')
     plt.ylabel('cov')
     plt.xlabel('t (s)')
-    plt.title('Estimation Covariance Behavior')
+    plt.title('Estimation Error and Covariance Behavior')
     plt.legend()
     plt.grid(True)
 
