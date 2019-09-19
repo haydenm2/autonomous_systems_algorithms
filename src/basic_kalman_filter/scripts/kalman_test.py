@@ -35,28 +35,28 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
 
     # Model parameters
-    m = 100
-    b = 20
-    dt = 0.05
-    R = np.array([[0.01, 0], [0, 0.0001]])
-    Q = np.array([0.001])
+    m = 100                                 # mass
+    b = 20                                  # drag coefficient
+    dt = 0.05                               # time step
+    R = np.array([[0.01, 0], [0, 0.0001]])  # process covariance
+    Q = np.array([0.001])                   # measurement covariance
 
     # plot data containers
-    x = np.zeros([int(50 / dt) + 1, 2])
-    z = np.zeros([int(50 / dt) + 1, 1])
-    t = np.zeros([int(50 / dt) + 1, 1])
-    two_sig_v = np.zeros([int(50 / dt) + 1, 2])
-    two_sig_x = np.zeros([int(50 / dt) + 1, 2])
-    mu = np.zeros([int(50 / dt) + 1, 2])
-    K = np.zeros([int(50 / dt) + 1, 2])
+    x = np.zeros([int(50 / dt) + 1, 2])             # state truth vector
+    z = np.zeros([int(50 / dt) + 1, 1])             # measurement vector
+    t = np.zeros([int(50 / dt) + 1, 1])             # time vector
+    two_sig_v = np.zeros([int(50 / dt) + 1, 2])     # two-sigma velocity boundary
+    two_sig_x = np.zeros([int(50 / dt) + 1, 2])     # two-sigma position boundary
+    mu = np.zeros([int(50 / dt) + 1, 2])            # state estimation vector
+    K = np.zeros([int(50 / dt) + 1, 2])             # Kalman gain vector
 
     # state space model
-    A = np.array([[-b / m, 0], [1, 0]])
-    B = np.array([[1 / m], [0]])
-    C = np.array([0, 1])
-    D = np.array(0)
-    sys = ct.ss(A, B, C, D)
-    sysd = ct.c2d(sys, dt)
+    A = np.array([[-b / m, 0], [1, 0]])             # continuous state space A-matrix
+    B = np.array([[1 / m], [0]])                    # continuous state space B-matrix
+    C = np.array([0, 1])                            # continuous state space C-matrix
+    D = np.array(0)                                 # continuous state space D-matrix
+    sys = ct.ss(A, B, C, D)                         # continuous LTI system object
+    sysd = ct.c2d(sys, dt)                          # discrete LTI system object
 
     # Kalman Filter Init
     UUV = Kalman(sysd.A, sysd.B, sysd.C, R, Q)
@@ -77,14 +77,15 @@ if __name__ == "__main__":
         epsilon = np.array([np.sqrt(R.item((0, 0))) * np.random.randn(), np.sqrt(R.item((1, 1))) * np.random.randn()])
         delta = np.array(np.sqrt(Q) * np.random.randn())
 
+        # update truth/measurement data vectors
         t[i + 1] = i * dt
         x[i + 1] = sysd.A @ x[i] + sysd.B @ (np.array([F[i]]).transpose()) + epsilon
         z[i + 1] = sysd.C @ x[i] + delta
 
+        # kalman updates
         UUV.Execute(np.array([F[i]]), z[i + 1])
         mu[i + 1] = UUV.mu.transpose()
         K[i + 1] = UUV.K.transpose()
-
         two_sig_v[i + 1] = np.array([2 * np.sqrt(UUV.cov.item((0, 0))), -2 * np.sqrt(UUV.cov.item((0, 0)))])
         two_sig_x[i + 1] = np.array([2 * np.sqrt(UUV.cov.item((1, 1))), -2 * np.sqrt(UUV.cov.item((1, 1)))])
 
@@ -117,7 +118,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
 
-    # plot covariance convergence of states
+    # plot error and covariance of states
     plt.figure(2)
     plt.plot(t, verr, 'm-', label='Velocity Error')
     plt.plot(t, xerr, 'c-', label='Position Error')
