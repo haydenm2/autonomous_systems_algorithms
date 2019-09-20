@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # ------------------------------------------------------------------
 # Summary:
-# Example of implementation of kalman class on a simple Unmanned Underwater Vehicle (UUV) system defined by:
+# Example of implementation of ekf class on a simple Two-Wheeled Robot system defined by:
 #
 # m*vdot+b*v=F(t)
 # xdot = v
@@ -55,11 +55,11 @@ if __name__ == "__main__":
     F = np.zeros([int(duration / dt)])
     for i in range(int(duration / dt)):
         if i < int(5 / dt):
-            F[i] = 500
+            F[i] = 50
         elif i < int(25 / dt):
             F[i] = 0
         elif i < int(30 / dt):
-            F[i] = -500
+            F[i] = -50
         else:
             F[i] = 0
 

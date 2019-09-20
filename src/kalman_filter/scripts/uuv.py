@@ -55,7 +55,7 @@ class UUV:
         # update truth/measurement data vectors
         self.t[self.i + 1] = self.i * self.dt
         self.x[self.i + 1] = self.A @ self.x[self.i] + self.B @ (np.array([u]).transpose()) + epsilon
-        self.z[self.i + 1] = self.C @ self.x[self.i] + delta
+        self.z[self.i + 1] = self.C @ self.x[self.i + 1] + delta
         self.i += 1
 
     def Getx(self):
