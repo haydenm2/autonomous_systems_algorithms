@@ -15,45 +15,33 @@ import control as ct
 #
 
 
-class Kalman:
-    def __init__(self, A, B, C, R, Q):
-        self.nx = np.size(A, axis=0)                # number of state variables
-        self.nu = np.size(B, axis=1)                # number of input types
-        self.nz = np.size(C, axis=0)                # number of measurement types
-        self.u = np.zeros([self.nu, 1])             # input command history
-        self.z = np.zeros([self.nz, 1])             # measurement history
-        self.mu = np.zeros([self.nx, 1])            # state mean vector
+class EKF:
+    def __init__(self):
+        self.u = np.zeros([2, 1])             # input command history
+        self.z = np.zeros([3, 1])             # measurement history
+        self.mu = np.zeros([3, 1])            # state mean vector
         self.mu_bar = self.mu                       # state mean prediction vector
-        self.R = R                                  # process covariance
-        self.Q = Q                                  # measurement covariance
-        self.cov = np.eye(self.nx)                  # state covariance
+        self.cov = np.eye(3)                  # state covariance
         self.cov_bar = self.cov                     # state covariance prediction
-        self.K = np.zeros([self.nx, self.nz])       # kalman gains
-        self.A = A                                  # discrete state A-matrix
-        self.B = B                                  # discrete state B-matrix
-        self.C = C                                  # discrete measurement C-matrix
+        self.G = np.zeros([3, 3])
+        self.V = np.zeros([3, 2])
+        self.M = np.zeros([2, 2])
+        self.Q = np.zeros([2, 2])
+        self.c = np.zeros([3, 2])
+        self.H = np.zeros([2, 3])
+        self.z_hat = np.zeros([2, 1])
+        self.S = np.zeros([2, 2])
+        self.K = np.zeros([3, 2])
+        self.pz = 0
+
 
     def Propogate(self, u, z):
         self.PredictState(u)
-        self.PredictCovariance()
-        self.UpdateGains()
-        self.UpdateState(z)
-        self.UpdateCovariance()
+        self.AddMeasurement(z)
 
     def PredictState(self, u):
         self.mu_bar = self.A @ self.mu + (self.B @ u).transpose()
 
-    def PredictCovariance(self):
-        self.cov_bar = self.A @ (self.cov @ self.A.transpose()) + self.R
-
-    def UpdateGains(self):
-        temp = np.linalg.inv(self.C @ (self.cov_bar @ self.C.transpose()) + self.Q)
-        self.K = self.cov_bar @ (self.C.transpose() @ temp)
-
-    def UpdateState(self, z):
+    def AddMeasurement(self, z):
         temp = z - self.C @ self.mu_bar
         self.mu = self.mu_bar + self.K @ temp
-
-    def UpdateCovariance(self):
-        temp = np.eye(self.nx) - self.K @ self.C
-        self.cov = temp @ self.cov_bar

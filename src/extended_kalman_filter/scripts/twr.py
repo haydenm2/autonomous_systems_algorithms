@@ -25,41 +25,83 @@ import control as ct
 
 
 class TWR:
-    def __init__(self, x0, duration, dt):
+    def __init__(self, t_end=20, dt=0.1):
+
         # Time parameters
-        self.duration = duration  # duration of run
+        self.t_end = t_end        # completion time
         self.dt = dt              # time step
-        self.i = 0                # iterator variable
 
         # Noise characteristics of motion
         self.a_1 = 0.1
         self.a_2 = 0.01
-        self.a_3 = self.a_2
-        self.a_4 = self.a_1
+        self.a_3 = 0.01
+        self.a_4 = 0.1
+        self.sig_r = 0.1
+        self.sig_phi = 0.05
 
-        # plot data containers
-        self.x = np.zeros([int(self.duration / self.dt) + 1, 3])  # state truth vector
-        self.x[self.i] = x0                                       # initial states
-        self.z = np.zeros([int(self.duration / self.dt) + 1, 2])  # measurement vector
-        self.u = np.zeros([int(self.duration / self.dt) + 1, 2])  # input command vector
-        self.t = np.zeros([int(self.duration / self.dt) + 1, 1])  # time vector
+        # Plot data containers
+        self.x = np.zeros([3, 1])  # state truth vector
+        self.x = np.array([[-5], [-3], [90*(np.pi/180)]])   # initial states
+        self.z1 = np.zeros([3, 1])  # measurement vector
+        self.z2 = np.zeros([3, 1])  # measurement vector
+        self.z3 = np.zeros([3, 1])  # measurement vector
+        self.u = np.zeros([2, 1])  # input command vector
+        self.t = np.zeros(1)       # time vector
 
+        # Landmark Locations
+        self.l1 = np.array([6, 4])
+        self.l2 = np.array([-7, 8])
+        self.l3 = np.array([6, -4])
 
-    def Propagate(self, u):
-        # random noise variables
-        epsilon = np.array([np.sqrt(self.R.item((0, 0))) * np.random.randn(), np.sqrt(self.R.item((1, 1))) * np.random.randn()])
-        delta = np.array(np.sqrt(self.Q) * np.random.randn())
+        # Truth Propogation Containers
+        self.x_new = np.zeros([3, 1])
+        self.u_new = np.zeros([2, 1])
+        self.t_new = np.zeros(1)
+        self.z1_new = np.zeros([3, 1])
+        self.z2_new = np.zeros([3, 1])
+        self.z3_new = np.zeros([3, 1])
+
+    def Propagate(self):
+
+        # motion model calculations
+        self.t_new[0] = self.t[np.size(self.t)-1] + self.dt
+        self.u_new[0] = 1 + 0.5 * np.cos(2 * np.pi * (0.2) * self.t_new)
+        self.u_new[1] = -0.2 + 2 * np.cos(2 * np.pi * (0.6) * self.t_new)
+
+        v = self.u_new[0] + np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
+        w = self.u_new[1] + np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
+        gamma = 0
+        self.x_new[0] = self.x[0, len(self.x[0])-1] - (v/w) * np.sin(self.x[2, len(self.x[0])-1]) + (v/w) * np.sin(self.x[2, len(self.x[0])-1] + w*self.dt)
+        self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
+        self.x_new[2] = self.x[2, len(self.x[0])-1] + w * self.dt + gamma * self.dt
+
+        self.z1_new[0] = np.sqrt(np.power(self.l1[0] - self.x_new[0], 2) + np.power(self.l1[1] - self.x_new[1], 2))
+        self.z1_new[1] = np.arctan2(self.l1[1] - self.x_new[1], self.l1[0] - self.x_new[0]) - self.x_new[2]
+
+        self.z2_new[0] = np.sqrt(np.power(self.l2[0] - self.x_new[0], 2) + np.power(self.l2[1] - self.x_new[1], 2))
+        self.z2_new[1] = np.arctan2(self.l2[1] - self.x_new[1], self.l2[0] - self.x_new[0]) - self.x_new[2]
+
+        self.z3_new[0] = np.sqrt(np.power(self.l3[0] - self.x_new[0], 2) + np.power(self.l3[1] - self.x_new[1], 2))
+        self.z3_new[1] = np.arctan2(self.l3[1] - self.x_new[1], self.l3[0] - self.x_new[0]) - self.x_new[2]
 
         # update truth/measurement data vectors
-        self.t[self.i + 1] = self.i * self.dt
-        self.x[self.i + 1] = self.A @ self.x[self.i] + self.B @ (np.array([u]).transpose()) + epsilon
-        self.z[self.i + 1] = self.C @ self.x[self.i] + delta
-        self.i += 1
+        self.t = np.hstack((self.t, self.t_new))
+        self.x = np.hstack((self.x, self.x_new))
+        self.u = np.hstack((self.u, self.u_new))
+        self.z1 = np.hstack((self.z1, self.z1_new))
+        self.z2 = np.hstack((self.z2, self.z2_new))
+        self.z3 = np.hstack((self.z3, self.z3_new))
 
     def Getx(self):
-        return self.x[self.i]
+        return self.x[len(self.x[0])-1]
 
-    def Getz(self):
-        return self.z[self.i]
+    def Getz1(self):
+        return self.z1[len(self.z1[0])-1]
+
+    def Getz2(self):
+        return self.z2[len(self.z2[0])-1]
+
+    def Getz3(self):
+        return self.z3[len(self.z3[0])-1]
 
 
