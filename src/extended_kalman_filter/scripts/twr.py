@@ -93,15 +93,15 @@ class TWR:
         self.z3 = np.hstack((self.z3, self.z3_new))
 
     def Getx(self):
-        return self.x[len(self.x[0])-1]
+        return self.x[:, len(self.x[0])-1]
 
     def Getz1(self):
-        return self.z1[len(self.z1[0])-1]
+        return self.z1[:, len(self.z1[0])-1]
 
     def Getz2(self):
-        return self.z2[len(self.z2[0])-1]
+        return self.z2[:, len(self.z2[0])-1]
 
     def Getz3(self):
-        return self.z3[len(self.z3[0])-1]
+        return self.z3[:, len(self.z3[0])-1]
 
 

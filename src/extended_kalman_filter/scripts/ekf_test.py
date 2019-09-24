@@ -3,6 +3,7 @@ from ekf import EKF
 from twr import TWR
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 
 # ------------------------------------------------------------------
 # Summary:
@@ -36,10 +37,14 @@ if __name__ == "__main__":
     # K = np.zeros([1, 2])             # Kalman gain vector
 
     fig, ax = plt.subplots()
-    lines, = ax.plot([], [], 'r-')
-    ax.plot(twr.l1[0], twr.l1[1], 'o')
-    ax.plot(twr.l2[0], twr.l2[1], 'o')
-    ax.plot(twr.l3[0], twr.l3[1], 'o')
+    lines, = ax.plot([], [], 'r-', zorder=1)
+    body_radius = 0.3
+    robot_body = Circle((0, 0), body_radius, color='b', zorder=2)
+    ax.add_artist(robot_body)
+    robot_head, = ax.plot([], [], 'c-', zorder=3)
+    ax.plot(twr.l1[0], twr.l1[1], 'o', zorder=4)
+    ax.plot(twr.l2[0], twr.l2[1], 'o', zorder=4)
+    ax.plot(twr.l3[0], twr.l3[1], 'o', zorder=4)
     ax.set_xlim([-10, 10])
     ax.set_ylim([-10, 10])
     ax.grid()
@@ -50,6 +55,7 @@ if __name__ == "__main__":
         xt = twr.x[0:2, :]  # position truth
         lines.set_xdata(xt[0, :])
         lines.set_ydata(xt[1, :])
+        robot_body.center = ((twr.Getx())[0], (twr.Getx())[1])
         fig.canvas.draw()
         plt.pause(0.001)
 
