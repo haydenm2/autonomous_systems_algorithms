@@ -19,19 +19,16 @@ class EKF:
     def __init__(self, dt=0.1, x0=np.array([[-5], [-3], [90*np.pi/180.0]])):
         self.u = np.zeros([2, 1])             # input command history
         self.z = np.zeros([3, 1])             # measurement history
-        self.mu = x0                          # state mean vector
-        self.mu_bar = self.mu                 # state mean prediction vector
+        self.mu = np.copy(x0)                        # state mean vector
+        self.mu_bar = np.copy(x0)                 # state mean prediction vector
         self.cov = np.eye(3)                  # state covariance
-        self.cov_bar = self.cov               # state covariance prediction
+        self.cov_bar = np.eye(3)               # state covariance prediction
         self.G = np.eye(3)
         self.V = np.zeros([3, 2])
+        self.K = np.zeros([6, 1])
         self.M = np.zeros([2, 2])
         self.Q = np.zeros([2, 2])
         self.c = np.zeros([3, 2])
-        self.H = np.zeros([2, 3])
-        self.z_hat = np.zeros([2, 1])
-        self.S = np.zeros([2, 2])
-        self.K = np.zeros([3, 2])
         self.pz = 0
         self.a_1 = 0.1
         self.a_2 = 0.01
@@ -63,10 +60,6 @@ class EKF:
         self.V[0, 1] = vt * (np.sin(theta) - np.sin(theta + wt * self.dt)) / np.power(wt, 2) + (vt * np.cos(theta + wt * self.dt) * self.dt) / wt
         self.V[1, 0] = (np.cos(theta) - np.cos(theta + wt * self.dt)) / wt
         self.V[1, 1] = -vt * (np.cos(theta) - np.cos(theta + wt * self.dt)) / np.power(wt, 2) + (vt * np.sin(theta + wt * self.dt) * self.dt) / wt
-
-        self.M[0, 0] = self.a_1*np.power(vt, 2) + self.a_2*np.power(wt, 2)
-        self.M[1, 1] = self.a_3*np.power(vt, 2) + self.a_4*np.power(wt, 2)
-
         self.mu_bar[0] = self.mu[0] + (-(vt/wt)*np.sin(theta)+(vt/wt)*np.sin(theta+wt*self.dt))
         self.mu_bar[1] = self.mu[1] + (vt/wt)*np.cos(theta)-(vt/wt)*np.cos(theta+wt*self.dt)
         self.mu_bar[2] = self.mu[2] + wt*self.dt
@@ -85,7 +78,8 @@ class EKF:
             H = np.array([[-dx/np.sqrt(q), -dy/np.sqrt(q), 0], [dy/q, -dx/q, -1]])
             S = H @ (self.cov_bar @ H.transpose()) + self.Q
             K = self.cov_bar @ (H.transpose() @ np.linalg.inv(S))
-            self.mu_bar = self.mu_bar + K @ (z[(0+j*2):(1+j*2), 0] - zhat)
+            self.mu_bar = self.mu_bar + K @ (z[(0+j*2):(2+j*2)] - zhat)
             self.cov_bar = (np.eye(3) - (K @ H)) @ self.cov_bar
         self.mu = self.mu_bar
         self.cov = self.cov_bar
+        self.K = K.reshape((6, 1))

@@ -39,23 +39,29 @@ class TWR:
         self.sig_r = 0.1
         self.sig_phi = 0.05
 
-        # Plot data containers
-        self.x = np.zeros([3, 1])  # state truth vector
-        self.x = np.array([[-5], [-3], [90*(np.pi/180)]])   # initial states
-        self.z1 = np.zeros([2, 1])  # measurement vector
-        self.z2 = np.zeros([2, 1])  # measurement vector
-        self.z3 = np.zeros([2, 1])  # measurement vector
-        self.u = np.zeros([2, 1])  # input command vector
-        self.t = np.zeros(1)       # time vector
-
         # Landmark Locations
         self.l1 = np.array([6, 4])
         self.l2 = np.array([-7, 8])
         self.l3 = np.array([6, -4])
         self.c = np.vstack((self.l1, self.l2, self.l3))
 
+        # Plot data containers
+        self.x = np.zeros([3, 1])  # state truth vector
+        self.x = np.array([[-5], [-3], [90*(np.pi/180)]])   # initial states
+        self.z1 = np.zeros([2, 1])  # measurement vector
+        self.z2 = np.zeros([2, 1])  # measurement vector
+        self.z3 = np.zeros([2, 1])  # measurement vector
+        self.z1[0] = np.sqrt(np.power(self.l1[0] - self.x[0], 2) + np.power(self.l1[1] - self.x[1], 2))
+        self.z1[1] = np.arctan2(self.l1[1] - self.x[1], self.l1[0] - self.x[0]) - self.x[2]
+        self.z2[0] = np.sqrt(np.power(self.l2[0] - self.x[0], 2) + np.power(self.l2[1] - self.x[1], 2))
+        self.z2[1] = np.arctan2(self.l2[1] - self.x[1], self.l2[0] - self.x[0]) - self.x[2]
+        self.z3[0] = np.sqrt(np.power(self.l3[0] - self.x[0], 2) + np.power(self.l3[1] - self.x[1], 2))
+        self.z3[1] = np.arctan2(self.l3[1] - self.x[1], self.l3[0] - self.x[0]) - self.x[2]
+        self.u = np.zeros([2, 1])  # input command vector
+        self.t = np.zeros(1)       # time vector
+
         # Truth Propogation Containers
-        self.x_new = np.zeros([3, 1])
+        self.x_new = np.copy(self.x)
         self.u_new = np.array([[1.5], [1.8]])
         self.t_new = np.zeros(1)
         self.z1_new = np.zeros([2, 1])
@@ -69,8 +75,8 @@ class TWR:
         self.u_new[0] = 1 + 0.5 * np.cos(2 * np.pi * (0.2) * self.t_new)
         self.u_new[1] = -0.2 + 2 * np.cos(2 * np.pi * (0.6) * self.t_new)
 
-        v = self.u_new[0] #+ np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
-        w = self.u_new[1] #+ np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
+        v = self.u_new[0] + np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
+        w = self.u_new[1] + np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
         gamma = 0
         self.x_new[0] = self.x[0, len(self.x[0])-1] - (v/w) * np.sin(self.x[2, len(self.x[0])-1]) + (v/w) * np.sin(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
@@ -93,22 +99,30 @@ class TWR:
         self.z2 = np.hstack((self.z2, self.z2_new))
         self.z3 = np.hstack((self.z3, self.z3_new))
 
+
+
     def Getx(self):
         return self.x_new
 
     def Getu(self):
         return self.u_new
 
-    def Getz1(self):
-        return self.z1_new
-
-    def Getz2(self):
-        return self.z2_new
-
-    def Getz3(self):
-        return self.z3_new
-
     def Getz(self):
-        return (np.vstack((self.z1_new, self.z2_new, self.z3_new)))
+        z1 = self.z1[:, len(self.z1[0])-1]
+        z2 = self.z2[:, len(self.z2[0])-1]
+        z3 = self.z3[:, len(self.z3[0])-1]
+        return np.hstack((z1, z2, z3)).reshape((6, 1))
+
+    def Getzpos(self):
+        z1 = self.z1[:, len(self.z1[0]) - 1] + np.array([self.sig_r*np.random.randn(), self.sig_phi*np.random.randn()])
+        z2 = self.z2[:, len(self.z2[0]) - 1] + np.array([self.sig_r*np.random.randn(), self.sig_phi*np.random.randn()])
+        z3 = self.z3[:, len(self.z3[0]) - 1] + np.array([self.sig_r*np.random.randn(), self.sig_phi*np.random.randn()])
+        x = self.x_new[0, 0]
+        y = self.x_new[1, 0]
+        theta = self.x_new[2, 0]
+        xz1 = np.array([[np.cos(theta+z1[1])*z1[0]+x], [np.sin(theta+z1[1])*z1[0]+y]])
+        xz2 = np.array([[np.cos(theta+z2[1])*z2[0]+x], [np.sin(theta+z2[1])*z2[0]]+y])
+        xz3 = np.array([[np.cos(theta+z3[1])*z3[0]+x], [np.sin(theta+z3[1])*z3[0]]+y])
+        return np.hstack((xz1, xz2, xz3))
 
 

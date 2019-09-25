@@ -30,21 +30,24 @@ def InitPlot(twr, body_radius):
     robot_body = Circle((0, 0), body_radius, color='b', zorder=3)
     ax.add_artist(robot_body)
     robot_head, = ax.plot([], [], 'c-', zorder=4)
-    ax.plot(twr.l1[0], twr.l1[1], 'o', zorder=5)
-    ax.plot(twr.l2[0], twr.l2[1], 'o', zorder=5)
-    ax.plot(twr.l3[0], twr.l3[1], 'o', zorder=5)
+    msensor, = ax.plot([], [], 'ro', zorder=5)
+    ax.plot(twr.l1[0], twr.l1[1], 'o', zorder=6)
+    ax.plot(twr.l2[0], twr.l2[1], 'o', zorder=6)
+    ax.plot(twr.l3[0], twr.l3[1], 'o', zorder=6)
     ax.set_xlim([-10, 10])
     ax.set_ylim([-10, 10])
     ax.grid()
-    return fig, lines, lines_est, robot_body, robot_head
+    return fig, lines, lines_est, msensor, robot_body, robot_head
 
 
-def UpdatePlot(fig, lines, lines_est, robot_body, body_radius, robot_head, twr, mu):
+def UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos):
     xt = twr.x[0:2, :]  # position truth
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
     lines_est.set_xdata(mu[0, :])
     lines_est.set_ydata(mu[1, :])
+    msensor.set_xdata(zpos[0, :])
+    msensor.set_ydata(zpos[1, :])
 
     robot_body.center = ((twr.Getx())[0], (twr.Getx())[1])
     headx = np.array([twr.Getx()[0], twr.Getx()[0] + body_radius * np.cos(twr.Getx()[2])])
@@ -71,20 +74,20 @@ if __name__ == "__main__":
     # K = np.zeros([1, 2])             # Kalman gain vector
 
     body_radius = 0.3
-    fig, lines, lines_est, robot_body, robot_head = InitPlot(twr, body_radius)
+    fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = ekf.mu
+    K = ekf.K
+    z = twr.Getzpos()
     for i in range(int(twr.t_end/twr.dt)):
         # truth model updates
         twr.Propagate()
         ekf.Propogate(twr.Getu(), twr.Getz())
+        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu)
+
+        # plotter updates
         mu = np.hstack((mu, ekf.mu))
-        UpdatePlot(fig, lines, lines_est, robot_body, body_radius, robot_head, twr, mu)
-
-
-        # # kalman updates
-        # kalman.Propogate(np.array([F[i]]), uuv.Getz())
-        # mu[i + 1] = kalman.mu.transpose()
-        # K[i + 1] = kalman.K.transpose()
+        K = np.hstack((K, ekf.K))
+        z = np.hstack((z, twr.Getzpos()))
         # two_sig_v[i + 1] = np.array([2 * np.sqrt(kalman.cov.item((0, 0))), -2 * np.sqrt(kalman.cov.item((0, 0)))])
         # two_sig_x[i + 1] = np.array([2 * np.sqrt(kalman.cov.item((1, 1))), -2 * np.sqrt(kalman.cov.item((1, 1)))])
 
@@ -105,7 +108,7 @@ if __name__ == "__main__":
     # Kx = (K.transpose())[1, :]  # position kalman gains
 
     # Plot state truth and state estimates
-    fig1 = plt.figure(2)
+    plt.figure(2)
     plt.plot(twr.t, xe, 'c-', label='Position Estimate')
     plt.plot(twr.t, ve, 'm-', label='Velocity Estimate')
     plt.plot(twr.t, xt, 'b-', label='Position Truth')
@@ -133,8 +136,12 @@ if __name__ == "__main__":
 
     # Plot kalman gain propogation
     plt.figure(3)
-    plt.plot(twr.t, Kv, 'b-', label='Velocity Kalman Gain')
-    plt.plot(twr.t, Kx, 'g-', label='Position Kalman Gain')
+    plt.plot(twr.t, K[0, :], label='Kalman Gain 1')
+    plt.plot(twr.t, K[1, :], label='Kalman Gain 2')
+    plt.plot(twr.t, K[2, :], label='Kalman Gain 3')
+    plt.plot(twr.t, K[3, :], label='Kalman Gain 4')
+    plt.plot(twr.t, K[4, :], label='Kalman Gain 5')
+    plt.plot(twr.t, K[5, :], label='Kalman Gain 6')
     plt.ylabel('K')
     plt.xlabel('t (s)')
     plt.title('Kalman Gain Behavior')
