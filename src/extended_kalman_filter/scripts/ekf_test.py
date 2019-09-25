@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # K = np.zeros([1, 2])             # Kalman gain vector
 
     body_radius = 0.3
-    fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
+    # fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = ekf.mu
     K = ekf.K
     zpos = twr.Getzpos()
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         mu = np.hstack((mu, ekf.mu))
         K = np.hstack((K, ekf.K))
         # zpos = np.hstack((zpos, twr.Getzpos())) # Historical sensor plotting
-        zpos = twr.Getzpos()
+        zpos = twr.Getzpos() # Immediate sensor plotting
         # UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ekf.cov.item((0, 0)))], [-2 * np.sqrt(ekf.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ekf.cov.item((1, 1)))], [-2 * np.sqrt(ekf.cov.item((1, 1)))]])))
@@ -116,69 +116,63 @@ if __name__ == "__main__":
 
     # Plot position x truth and estimate
     plt.figure(2)
+    plt.subplot(311)
     plt.plot(twr.t, xe, 'c-', label='Position X Estimate')
     plt.plot(twr.t, xt, 'b-', label='Position X Truth')
     plt.ylabel('x (m)')
-    plt.xlabel('t (s)')
-    plt.title('Position X Truth and Estimate')
+    plt.title('Position Truth and Estimate')
     plt.legend()
     plt.grid(True)
 
     # Plot position y truth and estimate
-    plt.figure(3)
+    plt.subplot(312)
     plt.plot(twr.t, ye, 'c-', label='Position Y Estimate')
     plt.plot(twr.t, yt, 'b-', label='Position Y Truth')
     plt.ylabel('y (m)')
-    plt.xlabel('t (s)')
-    plt.title('Position Y Truth and Estimate')
     plt.legend()
     plt.grid(True)
 
     # Plot position theta truth and estimate
-    plt.figure(4)
+    plt.subplot(313)
     plt.plot(twr.t, thetae, 'c-', label='Position Theta Estimate')
     plt.plot(twr.t, thetat, 'b-', label='Position Theta Truth')
     plt.ylabel('theta (rad)')
     plt.xlabel('t (s)')
-    plt.title('Position Theta Truth and Estimate')
     plt.legend()
     plt.grid(True)
 
     # Plot position x error and covariance of states
-    plt.figure(5)
+    plt.figure(3)
+    plt.subplot(311)
     plt.plot(twr.t, xerr, 'm-', label='Position X Error')
     plt.plot(twr.t, xc_upper, 'b--', label='Position X Covariance Bounds')
     plt.plot(twr.t, xc_lower, 'b--')
     plt.ylabel('x (m)')
-    plt.xlabel('t (s)')
-    plt.title('Position X Estimation Error and Covariance Behavior')
+    plt.title('Position Estimation Error and Covariance Behavior')
     plt.legend()
     plt.grid(True)
 
     # Plot position y error and covariance of states
-    plt.figure(6)
+    plt.subplot(312)
     plt.plot(twr.t, yerr, 'm-', label='Position Y Error')
     plt.plot(twr.t, yc_upper, 'b--', label='Position Y Covariance Bounds')
     plt.plot(twr.t, yc_lower, 'b--')
     plt.ylabel('y (m)')
-    plt.xlabel('t (s)')
-    plt.title('Position Y Estimation Error and Covariance Behavior')
     plt.legend()
     plt.grid(True)
 
     # Plot position theta error and covariance of states
-    plt.figure(7)
+    plt.subplot(313)
     plt.plot(twr.t, thetaerr, 'm-', label='Position Theta Error')
     plt.plot(twr.t, thetac_upper, 'b--', label='Position Theta Covariance Bounds')
     plt.plot(twr.t, thetac_lower, 'b--')
     plt.ylabel('theta (rad)')
     plt.xlabel('t (s)')
-    plt.title('Position Theta Estimation Error and Covariance Behavior')
     plt.legend()
     plt.grid(True)
 
     # Plot kalman gain propogation
-    plt.figure(8)
+    plt.figure(4)
     plt.plot(twr.t, K[0, :], label='Kalman Gain 1')
     plt.plot(twr.t, K[1, :], label='Kalman Gain 2')
     plt.plot(twr.t, K[2, :], label='Kalman Gain 3')

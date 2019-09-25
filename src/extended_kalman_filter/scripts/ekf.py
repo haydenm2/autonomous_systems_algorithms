@@ -21,7 +21,7 @@ class EKF:
         self.z = np.zeros([3, 1])             # measurement history
         self.mu = np.copy(x0)                        # state mean vector
         self.mu_bar = np.copy(x0)                 # state mean prediction vector
-        self.cov = np.eye(3)                  # state covariance
+        self.cov = np.eye(3) * 0.1                 # state covariance
         self.cov_bar = np.eye(3)               # state covariance prediction
         self.G = np.eye(3)
         self.V = np.zeros([3, 2])
