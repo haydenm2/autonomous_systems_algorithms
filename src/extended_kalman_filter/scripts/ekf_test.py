@@ -77,65 +77,108 @@ if __name__ == "__main__":
     fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = ekf.mu
     K = ekf.K
-    z = twr.Getzpos()
+    zpos = twr.Getzpos()
+    two_sig_x = np.array([[2 * np.sqrt(ekf.cov.item((0, 0)))], [-2 * np.sqrt(ekf.cov.item((0, 0)))]])
+    two_sig_y = np.array([[2 * np.sqrt(ekf.cov.item((1, 1)))], [-2 * np.sqrt(ekf.cov.item((1, 1)))]])
+    two_sig_theta = np.array([[2 * np.sqrt(ekf.cov.item((2, 2)))], [-2 * np.sqrt(ekf.cov.item((2, 2)))]])
     for i in range(int(twr.t_end/twr.dt)):
         # truth model updates
         twr.Propagate()
         ekf.Propogate(twr.Getu(), twr.Getz())
-        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu)
 
         # plotter updates
         mu = np.hstack((mu, ekf.mu))
         K = np.hstack((K, ekf.K))
-        z = np.hstack((z, twr.Getzpos()))
-        # two_sig_v[i + 1] = np.array([2 * np.sqrt(kalman.cov.item((0, 0))), -2 * np.sqrt(kalman.cov.item((0, 0)))])
-        # two_sig_x[i + 1] = np.array([2 * np.sqrt(kalman.cov.item((1, 1))), -2 * np.sqrt(kalman.cov.item((1, 1)))])
+        # zpos = np.hstack((zpos, twr.Getzpos())) # Historical sensor plotting
+        zpos = twr.Getzpos()
+        # UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos)
+        two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ekf.cov.item((0, 0)))], [-2 * np.sqrt(ekf.cov.item((0, 0)))]])))
+        two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ekf.cov.item((1, 1)))], [-2 * np.sqrt(ekf.cov.item((1, 1)))]])))
+        two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(ekf.cov.item((2, 2)))], [-2 * np.sqrt(ekf.cov.item((2, 2)))]])))
 
     # Plotting Vectors
-    # ve = (mu.transpose())[0, :]  # velocity estimation
-    # xe = (mu.transpose())[1, :]  # position estimation
-    # vt = (uuv.x.transpose())[0, :]  # velocity truth
-    # xt = twr.x[0:1, :]  # position truth
-    # verr = ve-vt  # velocity error
-    # xerr = xe-xt  # position error
+    xe = mu[0, :]  # position x estimation
+    ye = mu[1, :]  # position y estimation
+    thetae = mu[2, :]  # position angle estimation
+    xt = twr.x[0, :]  # position x truth
+    yt = twr.x[1, :]  # position y truth
+    thetat = twr.x[2, :]  # position angle truth
+    xerr = xe-xt  # position x error
+    yerr = ye-yt  # position y error
+    thetaerr = thetae-thetat  # position y error
 
-    # vc_upper = (two_sig_v.transpose())[0, :]  # velocity two sigma covariance upper bound
-    # vc_lower = (two_sig_v.transpose())[1, :]  # velocity two sigma covariance lower bound
-    # xc_upper = (two_sig_x.transpose())[0, :]  # position two sigma covariance upper bound
-    # xc_lower = (two_sig_x.transpose())[1, :]  # position two sigma covariance lower bound
-    #
-    # Kv = (K.transpose())[0, :]  # velocity kalman gains
-    # Kx = (K.transpose())[1, :]  # position kalman gains
+    xc_upper = two_sig_x[0, :]  # position x two sigma covariance upper bound
+    xc_lower = two_sig_x[1, :]  # position x two sigma covariance lower bound
+    yc_upper = two_sig_y[0, :]  # position y two sigma covariance upper bound
+    yc_lower = two_sig_y[1, :]  # position y two sigma covariance lower bound
+    thetac_upper = two_sig_theta[0, :]  # position theta two sigma covariance upper bound
+    thetac_lower = two_sig_theta[1, :]  # position theta two sigma covariance lower bound
 
-    # Plot state truth and state estimates
+    # Plot position x truth and estimate
     plt.figure(2)
-    plt.plot(twr.t, xe, 'c-', label='Position Estimate')
-    plt.plot(twr.t, ve, 'm-', label='Velocity Estimate')
-    plt.plot(twr.t, xt, 'b-', label='Position Truth')
-    plt.plot(twr.t, vt, 'r-', label='Velocity Truth')
-    plt.plot(twr.t, twr.z, 'g--', label='Position Measurement')
-    plt.ylabel('mu')
+    plt.plot(twr.t, xe, 'c-', label='Position X Estimate')
+    plt.plot(twr.t, xt, 'b-', label='Position X Truth')
+    plt.ylabel('x (m)')
     plt.xlabel('t (s)')
-    plt.title('States and State Estimates')
+    plt.title('Position X Truth and Estimate')
     plt.legend()
     plt.grid(True)
 
-    # Plot error and covariance of states
-    plt.figure(2)
-    plt.plot(twr.t, verr, 'm-', label='Velocity Error')
-    plt.plot(twr.t, xerr, 'c-', label='Position Error')
-    plt.plot(twr.t, vc_upper, 'r--', label='Velocity Covariance Bounds')
-    plt.plot(twr.t, vc_lower, 'r--')
-    plt.plot(twr.t, xc_upper, 'b--', label='Position Covariance Bounds')
-    plt.plot(twr.t, xc_lower, 'b--')
-    plt.ylabel('cov')
+    # Plot position y truth and estimate
+    plt.figure(3)
+    plt.plot(twr.t, ye, 'c-', label='Position Y Estimate')
+    plt.plot(twr.t, yt, 'b-', label='Position Y Truth')
+    plt.ylabel('y (m)')
     plt.xlabel('t (s)')
-    plt.title('Estimation Error and Covariance Behavior')
+    plt.title('Position Y Truth and Estimate')
+    plt.legend()
+    plt.grid(True)
+
+    # Plot position theta truth and estimate
+    plt.figure(4)
+    plt.plot(twr.t, thetae, 'c-', label='Position Theta Estimate')
+    plt.plot(twr.t, thetat, 'b-', label='Position Theta Truth')
+    plt.ylabel('theta (rad)')
+    plt.xlabel('t (s)')
+    plt.title('Position Theta Truth and Estimate')
+    plt.legend()
+    plt.grid(True)
+
+    # Plot position x error and covariance of states
+    plt.figure(5)
+    plt.plot(twr.t, xerr, 'm-', label='Position X Error')
+    plt.plot(twr.t, xc_upper, 'b--', label='Position X Covariance Bounds')
+    plt.plot(twr.t, xc_lower, 'b--')
+    plt.ylabel('x (m)')
+    plt.xlabel('t (s)')
+    plt.title('Position X Estimation Error and Covariance Behavior')
+    plt.legend()
+    plt.grid(True)
+
+    # Plot position y error and covariance of states
+    plt.figure(6)
+    plt.plot(twr.t, yerr, 'm-', label='Position Y Error')
+    plt.plot(twr.t, yc_upper, 'b--', label='Position Y Covariance Bounds')
+    plt.plot(twr.t, yc_lower, 'b--')
+    plt.ylabel('y (m)')
+    plt.xlabel('t (s)')
+    plt.title('Position Y Estimation Error and Covariance Behavior')
+    plt.legend()
+    plt.grid(True)
+
+    # Plot position theta error and covariance of states
+    plt.figure(7)
+    plt.plot(twr.t, thetaerr, 'm-', label='Position Theta Error')
+    plt.plot(twr.t, thetac_upper, 'b--', label='Position Theta Covariance Bounds')
+    plt.plot(twr.t, thetac_lower, 'b--')
+    plt.ylabel('theta (rad)')
+    plt.xlabel('t (s)')
+    plt.title('Position Theta Estimation Error and Covariance Behavior')
     plt.legend()
     plt.grid(True)
 
     # Plot kalman gain propogation
-    plt.figure(3)
+    plt.figure(8)
     plt.plot(twr.t, K[0, :], label='Kalman Gain 1')
     plt.plot(twr.t, K[1, :], label='Kalman Gain 2')
     plt.plot(twr.t, K[2, :], label='Kalman Gain 3')

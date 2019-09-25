@@ -51,12 +51,12 @@ class TWR:
         self.z1 = np.zeros([2, 1])  # measurement vector
         self.z2 = np.zeros([2, 1])  # measurement vector
         self.z3 = np.zeros([2, 1])  # measurement vector
-        self.z1[0] = np.sqrt(np.power(self.l1[0] - self.x[0], 2) + np.power(self.l1[1] - self.x[1], 2))
-        self.z1[1] = np.arctan2(self.l1[1] - self.x[1], self.l1[0] - self.x[0]) - self.x[2]
-        self.z2[0] = np.sqrt(np.power(self.l2[0] - self.x[0], 2) + np.power(self.l2[1] - self.x[1], 2))
-        self.z2[1] = np.arctan2(self.l2[1] - self.x[1], self.l2[0] - self.x[0]) - self.x[2]
-        self.z3[0] = np.sqrt(np.power(self.l3[0] - self.x[0], 2) + np.power(self.l3[1] - self.x[1], 2))
-        self.z3[1] = np.arctan2(self.l3[1] - self.x[1], self.l3[0] - self.x[0]) - self.x[2]
+        self.z1[0] = np.sqrt(np.power(self.l1[0] - self.x[0], 2) + np.power(self.l1[1] - self.x[1], 2)) + self.sig_r*np.random.randn()
+        self.z1[1] = np.arctan2(self.l1[1] - self.x[1], self.l1[0] - self.x[0]) - self.x[2] + self.sig_phi*np.random.randn()
+        self.z2[0] = np.sqrt(np.power(self.l2[0] - self.x[0], 2) + np.power(self.l2[1] - self.x[1], 2)) + self.sig_r*np.random.randn()
+        self.z2[1] = np.arctan2(self.l2[1] - self.x[1], self.l2[0] - self.x[0]) - self.x[2] + self.sig_phi*np.random.randn()
+        self.z3[0] = np.sqrt(np.power(self.l3[0] - self.x[0], 2) + np.power(self.l3[1] - self.x[1], 2)) + self.sig_r*np.random.randn()
+        self.z3[1] = np.arctan2(self.l3[1] - self.x[1], self.l3[0] - self.x[0]) - self.x[2] + self.sig_phi*np.random.randn()
         self.u = np.zeros([2, 1])  # input command vector
         self.t = np.zeros(1)       # time vector
 
@@ -82,14 +82,14 @@ class TWR:
         self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[2] = self.x[2, len(self.x[0])-1] + w * self.dt + gamma * self.dt
 
-        self.z1_new[0] = np.sqrt(np.power(self.l1[0] - self.x_new[0], 2) + np.power(self.l1[1] - self.x_new[1], 2))
-        self.z1_new[1] = np.arctan2(self.l1[1] - self.x_new[1], self.l1[0] - self.x_new[0]) - self.x_new[2]
+        self.z1_new[0] = np.sqrt(np.power(self.l1[0] - self.x_new[0], 2) + np.power(self.l1[1] - self.x_new[1], 2)) + self.sig_r*np.random.randn()
+        self.z1_new[1] = np.arctan2(self.l1[1] - self.x_new[1], self.l1[0] - self.x_new[0]) - self.x_new[2] + self.sig_phi*np.random.randn()
 
-        self.z2_new[0] = np.sqrt(np.power(self.l2[0] - self.x_new[0], 2) + np.power(self.l2[1] - self.x_new[1], 2))
-        self.z2_new[1] = np.arctan2(self.l2[1] - self.x_new[1], self.l2[0] - self.x_new[0]) - self.x_new[2]
+        self.z2_new[0] = np.sqrt(np.power(self.l2[0] - self.x_new[0], 2) + np.power(self.l2[1] - self.x_new[1], 2)) + self.sig_r*np.random.randn()
+        self.z2_new[1] = np.arctan2(self.l2[1] - self.x_new[1], self.l2[0] - self.x_new[0]) - self.x_new[2] + self.sig_phi*np.random.randn()
 
-        self.z3_new[0] = np.sqrt(np.power(self.l3[0] - self.x_new[0], 2) + np.power(self.l3[1] - self.x_new[1], 2))
-        self.z3_new[1] = np.arctan2(self.l3[1] - self.x_new[1], self.l3[0] - self.x_new[0]) - self.x_new[2]
+        self.z3_new[0] = np.sqrt(np.power(self.l3[0] - self.x_new[0], 2) + np.power(self.l3[1] - self.x_new[1], 2)) + self.sig_r*np.random.randn()
+        self.z3_new[1] = np.arctan2(self.l3[1] - self.x_new[1], self.l3[0] - self.x_new[0]) - self.x_new[2] + self.sig_phi*np.random.randn()
 
         # update truth/measurement data vectors
         self.t = np.hstack((self.t, self.t_new))
@@ -114,9 +114,9 @@ class TWR:
         return np.hstack((z1, z2, z3)).reshape((6, 1))
 
     def Getzpos(self):
-        z1 = self.z1[:, len(self.z1[0]) - 1] + np.array([self.sig_r*np.random.randn(), self.sig_phi*np.random.randn()])
-        z2 = self.z2[:, len(self.z2[0]) - 1] + np.array([self.sig_r*np.random.randn(), self.sig_phi*np.random.randn()])
-        z3 = self.z3[:, len(self.z3[0]) - 1] + np.array([self.sig_r*np.random.randn(), self.sig_phi*np.random.randn()])
+        z1 = self.z1[:, len(self.z1[0]) - 1]
+        z2 = self.z2[:, len(self.z2[0]) - 1]
+        z3 = self.z3[:, len(self.z3[0]) - 1]
         x = self.x_new[0, 0]
         y = self.x_new[1, 0]
         theta = self.x_new[2, 0]
