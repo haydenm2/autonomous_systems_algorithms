@@ -42,9 +42,9 @@ class TWR:
         # Plot data containers
         self.x = np.zeros([3, 1])  # state truth vector
         self.x = np.array([[-5], [-3], [90*(np.pi/180)]])   # initial states
-        self.z1 = np.zeros([3, 1])  # measurement vector
-        self.z2 = np.zeros([3, 1])  # measurement vector
-        self.z3 = np.zeros([3, 1])  # measurement vector
+        self.z1 = np.zeros([2, 1])  # measurement vector
+        self.z2 = np.zeros([2, 1])  # measurement vector
+        self.z3 = np.zeros([2, 1])  # measurement vector
         self.u = np.zeros([2, 1])  # input command vector
         self.t = np.zeros(1)       # time vector
 
@@ -52,14 +52,15 @@ class TWR:
         self.l1 = np.array([6, 4])
         self.l2 = np.array([-7, 8])
         self.l3 = np.array([6, -4])
+        self.c = np.vstack((self.l1, self.l2, self.l3))
 
         # Truth Propogation Containers
         self.x_new = np.zeros([3, 1])
-        self.u_new = np.zeros([2, 1])
+        self.u_new = np.array([[1.5], [1.8]])
         self.t_new = np.zeros(1)
-        self.z1_new = np.zeros([3, 1])
-        self.z2_new = np.zeros([3, 1])
-        self.z3_new = np.zeros([3, 1])
+        self.z1_new = np.zeros([2, 1])
+        self.z2_new = np.zeros([2, 1])
+        self.z3_new = np.zeros([2, 1])
 
     def Propagate(self):
 
@@ -68,8 +69,8 @@ class TWR:
         self.u_new[0] = 1 + 0.5 * np.cos(2 * np.pi * (0.2) * self.t_new)
         self.u_new[1] = -0.2 + 2 * np.cos(2 * np.pi * (0.6) * self.t_new)
 
-        v = self.u_new[0] + np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
-        w = self.u_new[1] + np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
+        v = self.u_new[0] #+ np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
+        w = self.u_new[1] #+ np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
         gamma = 0
         self.x_new[0] = self.x[0, len(self.x[0])-1] - (v/w) * np.sin(self.x[2, len(self.x[0])-1]) + (v/w) * np.sin(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
@@ -93,15 +94,21 @@ class TWR:
         self.z3 = np.hstack((self.z3, self.z3_new))
 
     def Getx(self):
-        return self.x[:, len(self.x[0])-1]
+        return self.x_new
+
+    def Getu(self):
+        return self.u_new
 
     def Getz1(self):
-        return self.z1[:, len(self.z1[0])-1]
+        return self.z1_new
 
     def Getz2(self):
-        return self.z2[:, len(self.z2[0])-1]
+        return self.z2_new
 
     def Getz3(self):
-        return self.z3[:, len(self.z3[0])-1]
+        return self.z3_new
+
+    def Getz(self):
+        return (np.vstack((self.z1_new, self.z2_new, self.z3_new)))
 
 

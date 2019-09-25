@@ -22,6 +22,40 @@ from matplotlib.patches import Circle
 # - Sample period of 0.1 s
 #
 
+
+def InitPlot(twr, body_radius):
+    fig, ax = plt.subplots()
+    lines, = ax.plot([], [], 'g-', zorder=1)
+    lines_est, = ax.plot([], [], 'r--', zorder=2)
+    robot_body = Circle((0, 0), body_radius, color='b', zorder=3)
+    ax.add_artist(robot_body)
+    robot_head, = ax.plot([], [], 'c-', zorder=4)
+    ax.plot(twr.l1[0], twr.l1[1], 'o', zorder=5)
+    ax.plot(twr.l2[0], twr.l2[1], 'o', zorder=5)
+    ax.plot(twr.l3[0], twr.l3[1], 'o', zorder=5)
+    ax.set_xlim([-10, 10])
+    ax.set_ylim([-10, 10])
+    ax.grid()
+    return fig, lines, lines_est, robot_body, robot_head
+
+
+def UpdatePlot(fig, lines, lines_est, robot_body, body_radius, robot_head, twr, mu):
+    xt = twr.x[0:2, :]  # position truth
+    lines.set_xdata(xt[0, :])
+    lines.set_ydata(xt[1, :])
+    lines_est.set_xdata(mu[0, :])
+    lines_est.set_ydata(mu[1, :])
+
+    robot_body.center = ((twr.Getx())[0], (twr.Getx())[1])
+    headx = np.array([twr.Getx()[0], twr.Getx()[0] + body_radius * np.cos(twr.Getx()[2])])
+    heady = np.array([twr.Getx()[1], twr.Getx()[1] + body_radius * np.sin(twr.Getx()[2])])
+    robot_head.set_xdata(headx)
+    robot_head.set_ydata(heady)
+
+    fig.canvas.draw()
+    plt.pause(0.01)
+
+
 if __name__ == "__main__":
 
     # Two-Wheeled Robot Init
@@ -36,28 +70,16 @@ if __name__ == "__main__":
     # mu = np.zeros([1, 2])            # state estimation vector
     # K = np.zeros([1, 2])             # Kalman gain vector
 
-    fig, ax = plt.subplots()
-    lines, = ax.plot([], [], 'r-', zorder=1)
     body_radius = 0.3
-    robot_body = Circle((0, 0), body_radius, color='b', zorder=2)
-    ax.add_artist(robot_body)
-    robot_head, = ax.plot([], [], 'c-', zorder=3)
-    ax.plot(twr.l1[0], twr.l1[1], 'o', zorder=4)
-    ax.plot(twr.l2[0], twr.l2[1], 'o', zorder=4)
-    ax.plot(twr.l3[0], twr.l3[1], 'o', zorder=4)
-    ax.set_xlim([-10, 10])
-    ax.set_ylim([-10, 10])
-    ax.grid()
-
+    fig, lines, lines_est, robot_body, robot_head = InitPlot(twr, body_radius)
+    mu = ekf.mu
     for i in range(int(twr.t_end/twr.dt)):
         # truth model updates
         twr.Propagate()
-        xt = twr.x[0:2, :]  # position truth
-        lines.set_xdata(xt[0, :])
-        lines.set_ydata(xt[1, :])
-        robot_body.center = ((twr.Getx())[0], (twr.Getx())[1])
-        fig.canvas.draw()
-        plt.pause(0.001)
+        ekf.Propogate(twr.Getu(), twr.Getz())
+        mu = np.hstack((mu, ekf.mu))
+        UpdatePlot(fig, lines, lines_est, robot_body, body_radius, robot_head, twr, mu)
+
 
         # # kalman updates
         # kalman.Propogate(np.array([F[i]]), uuv.Getz())
@@ -83,7 +105,7 @@ if __name__ == "__main__":
     # Kx = (K.transpose())[1, :]  # position kalman gains
 
     # Plot state truth and state estimates
-    fig1 = plt.figure(1)
+    fig1 = plt.figure(2)
     plt.plot(twr.t, xe, 'c-', label='Position Estimate')
     plt.plot(twr.t, ve, 'm-', label='Velocity Estimate')
     plt.plot(twr.t, xt, 'b-', label='Position Truth')
