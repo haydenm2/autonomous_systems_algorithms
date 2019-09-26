@@ -75,12 +75,14 @@ class TWR:
         self.u_new[0] = 1 + 0.5 * np.cos(2 * np.pi * (0.2) * self.t_new)
         self.u_new[1] = -0.2 + 2 * np.cos(2 * np.pi * (0.6) * self.t_new)
 
-        v = self.u_new[0] + np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
-        w = self.u_new[1] + np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
+        v = self.u_new[0] #+ np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
+        w = self.u_new[1] #+ np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
         gamma = 0
         self.x_new[0] = self.x[0, len(self.x[0])-1] - (v/w) * np.sin(self.x[2, len(self.x[0])-1]) + (v/w) * np.sin(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[2] = self.x[2, len(self.x[0])-1] + w * self.dt + gamma * self.dt
+
+        print(self.x_new)
 
         self.z1_new[0] = np.sqrt(np.power(self.l1[0] - self.x_new[0], 2) + np.power(self.l1[1] - self.x_new[1], 2)) + self.sig_r*np.random.randn()
         self.z1_new[1] = np.arctan2(self.l1[1] - self.x_new[1], self.l1[0] - self.x_new[0]) - self.x_new[2] + self.sig_phi*np.random.randn()
@@ -99,8 +101,6 @@ class TWR:
         self.z2 = np.hstack((self.z2, self.z2_new))
         self.z3 = np.hstack((self.z3, self.z3_new))
 
-
-
     def Getx(self):
         return self.x_new
 
@@ -108,9 +108,9 @@ class TWR:
         return self.u_new
 
     def Getz(self):
-        z1 = self.z1[:, len(self.z1[0])-1]
-        z2 = self.z2[:, len(self.z2[0])-1]
-        z3 = self.z3[:, len(self.z3[0])-1]
+        z1 = self.z1[:, len(self.z1[0]) - 1]
+        z2 = self.z2[:, len(self.z2[0]) - 1]
+        z3 = self.z3[:, len(self.z3[0]) - 1]
         return np.hstack((z1, z2, z3)).reshape((6, 1))
 
     def Getzpos(self):

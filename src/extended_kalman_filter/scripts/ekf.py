@@ -60,6 +60,11 @@ class EKF:
         self.V[0, 1] = vt * (np.sin(theta) - np.sin(theta + wt * self.dt)) / np.power(wt, 2) + (vt * np.cos(theta + wt * self.dt) * self.dt) / wt
         self.V[1, 0] = (np.cos(theta) - np.cos(theta + wt * self.dt)) / wt
         self.V[1, 1] = -vt * (np.cos(theta) - np.cos(theta + wt * self.dt)) / np.power(wt, 2) + (vt * np.sin(theta + wt * self.dt) * self.dt) / wt
+        self.V[2, 1] = self.dt
+
+        self.M[0, 0] = self.a_1*np.power(vt, 2) + self.a_2*np.power(wt, 2)
+        self.M[1, 1] = self.a_3*np.power(vt, 2) + self.a_4*np.power(wt, 2)
+
         self.mu_bar[0] = self.mu[0] + (-(vt/wt)*np.sin(theta)+(vt/wt)*np.sin(theta+wt*self.dt))
         self.mu_bar[1] = self.mu[1] + (vt/wt)*np.cos(theta)-(vt/wt)*np.cos(theta+wt*self.dt)
         self.mu_bar[2] = self.mu[2] + wt*self.dt
