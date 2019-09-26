@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # K = np.zeros([1, 2])             # Kalman gain vector
 
     body_radius = 0.3
-    # fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
+    fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = ekf.mu
     K = ekf.K
     zpos = twr.Getzpos()
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         K = np.hstack((K, ekf.K))
         # zpos = np.hstack((zpos, twr.Getzpos())) # Historical sensor plotting
         zpos = twr.Getzpos() # Immediate sensor plotting
-        # UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos)
+        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ekf.cov.item((0, 0)))], [-2 * np.sqrt(ekf.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ekf.cov.item((1, 1)))], [-2 * np.sqrt(ekf.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(ekf.cov.item((2, 2)))], [-2 * np.sqrt(ekf.cov.item((2, 2)))]])))
