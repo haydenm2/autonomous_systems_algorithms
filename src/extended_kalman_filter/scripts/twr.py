@@ -111,6 +111,7 @@ class TWR:
         z3 = self.z3[:, len(self.z3[0]) - 1]
         return np.hstack((z1, z2, z3)).reshape((6, 1))
 
+    # Get position estimations in x,y coordinates of sensor values
     def Getzpos(self):
         z1 = self.z1[:, len(self.z1[0]) - 1]
         z2 = self.z2[:, len(self.z2[0]) - 1]

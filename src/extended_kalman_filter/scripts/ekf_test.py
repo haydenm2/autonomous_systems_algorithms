@@ -67,12 +67,6 @@ if __name__ == "__main__":
     # Kalman Filter Init
     ekf = EKF()
 
-    # # plot data containers
-    # two_sig_v = np.zeros([1, 2])     # two-sigma velocity boundary
-    # two_sig_x = np.zeros([1, 2])     # two-sigma position boundary
-    # mu = np.zeros([1, 2])            # state estimation vector
-    # K = np.zeros([1, 2])             # Kalman gain vector
-
     body_radius = 0.3
     fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = ekf.mu
