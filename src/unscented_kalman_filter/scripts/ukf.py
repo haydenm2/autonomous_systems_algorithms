@@ -3,10 +3,10 @@
 import numpy as np
 import control as ct
 
-# Generic Extended Kalman Filter Approach (From Probablistic Robotics)
+# Generic Unscented Kalman Filter Approach (From Probablistic Robotics)
 
 
-class EKF:
+class UKF:
     def __init__(self, c, n, dt=0.1, x0=np.array([[-5], [-3], [90*np.pi/180.0]])):
         self.u = np.zeros([2, 1])             # input command history
         self.z = np.zeros([3, 1])             # measurement history

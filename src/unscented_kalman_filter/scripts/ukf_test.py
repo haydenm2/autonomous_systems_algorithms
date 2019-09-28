@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ekf import EKF
+from ukf import UKF
 from twr import TWR
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,7 +7,7 @@ from matplotlib.patches import Circle
 
 # ------------------------------------------------------------------
 # Summary:
-# Example of implementation of ekf class on a simple Two-Wheeled Robot system defined by
+# Example of implementation of ukf class on a simple Two-Wheeled Robot system defined by
 # the motion model described in Chapter 5 of Probablistic Robotics
 #
 # Commanded as follows:
@@ -64,29 +64,29 @@ if __name__ == "__main__":
     twr = TWR()       # TWR model object
 
     # Kalman Filter Init
-    ekf = EKF(twr.c, twr.nl)
+    ukf = UKF(twr.c, twr.nl)
 
     body_radius = 0.3
     fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
-    mu = ekf.mu
-    K = ekf.K
-    two_sig_x = np.array([[2 * np.sqrt(ekf.cov.item((0, 0)))], [-2 * np.sqrt(ekf.cov.item((0, 0)))]])
-    two_sig_y = np.array([[2 * np.sqrt(ekf.cov.item((1, 1)))], [-2 * np.sqrt(ekf.cov.item((1, 1)))]])
-    two_sig_theta = np.array([[2 * np.sqrt(ekf.cov.item((2, 2)))], [-2 * np.sqrt(ekf.cov.item((2, 2)))]])
+    mu = ukf.mu
+    K = ukf.K
+    two_sig_x = np.array([[2 * np.sqrt(ukf.cov.item((0, 0)))], [-2 * np.sqrt(ukf.cov.item((0, 0)))]])
+    two_sig_y = np.array([[2 * np.sqrt(ukf.cov.item((1, 1)))], [-2 * np.sqrt(ukf.cov.item((1, 1)))]])
+    two_sig_theta = np.array([[2 * np.sqrt(ukf.cov.item((2, 2)))], [-2 * np.sqrt(ukf.cov.item((2, 2)))]])
     for i in range(int(twr.t_end/twr.dt)):
         # truth model updates
         twr.Propagate()
-        ekf.Propogate(twr.Getu(), twr.Getz())
+        ukf.Propogate(twr.Getu(), twr.Getz())
 
         # plotter updates
-        mu = np.hstack((mu, ekf.mu))
-        K = np.hstack((K, ekf.K))
+        mu = np.hstack((mu, ukf.mu))
+        K = np.hstack((K, ukf.K))
         # zpos = np.hstack((zpos, twr.Getzpos())) # Historical sensor plotting
         zpos = twr.Getzpos() # Immediate sensor plotting
         UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos)
-        two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ekf.cov.item((0, 0)))], [-2 * np.sqrt(ekf.cov.item((0, 0)))]])))
-        two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ekf.cov.item((1, 1)))], [-2 * np.sqrt(ekf.cov.item((1, 1)))]])))
-        two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(ekf.cov.item((2, 2)))], [-2 * np.sqrt(ekf.cov.item((2, 2)))]])))
+        two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ukf.cov.item((0, 0)))], [-2 * np.sqrt(ukf.cov.item((0, 0)))]])))
+        two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ukf.cov.item((1, 1)))], [-2 * np.sqrt(ukf.cov.item((1, 1)))]])))
+        two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(ukf.cov.item((2, 2)))], [-2 * np.sqrt(ukf.cov.item((2, 2)))]])))
 
     # Plotting Vectors
     xe = mu[0, :]  # position x estimation
