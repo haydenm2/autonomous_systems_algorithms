@@ -25,7 +25,7 @@ import control as ct
 
 
 class TWR:
-    def __init__(self, t_end=20, dt=0.1, n=3):
+    def __init__(self, t_end=20, dt=0.1, n=1):
 
         # Time parameters
         self.t_end = t_end        # completion time
@@ -43,8 +43,8 @@ class TWR:
         self.nl = n
         self.c = np.zeros([self.nl, 2])
         self.c[0] = np.array([6, 4])
-        self.c[1] = np.array([-7, 8])
-        self.c[2] = np.array([6, -4])
+        # self.c[1] = np.array([-7, 8])
+        # self.c[2] = np.array([6, -4])
 
         # Plot data containers
         self.x = np.zeros([3, 1])  # state truth vector

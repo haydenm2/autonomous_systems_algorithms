@@ -63,7 +63,7 @@ class EKF:
         self.Q[1, 1] = np.power(self.sig_phi, 2)
 
     def AddMeasurement(self, z):
-        for j in range(3):
+        for j in range(self.nl):
             dx = (self.c[j, 0] - self.mu_bar[0])[0]
             dy = (self.c[j, 1] - self.mu_bar[1])[0]
             q = np.power(dx, 2) + np.power(dy, 2)
