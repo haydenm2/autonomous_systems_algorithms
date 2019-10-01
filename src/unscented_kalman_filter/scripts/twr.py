@@ -62,6 +62,8 @@ class TWR:
         self.t_new = np.zeros(1)
         self.z_new = np.zeros([2, self.nl])
 
+
+
     def Propagate(self):
 
         # motion model calculations

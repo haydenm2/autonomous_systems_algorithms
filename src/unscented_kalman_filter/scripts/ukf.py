@@ -35,14 +35,18 @@ class UKF:
 
         # Sigma Point Variables
         self.n = len(self.mu)
+        self.L = 2 * self.n + 1
         self.kappa = 4
         self.alpha = 0.4
         self.beta = 2
         self.lmbda = self.alpha**2 * (self.n + self.kappa) - self.n
         self.gamma = np.sqrt(self.n + self.lmbda)
         self.sigma_pts_x = np.zeros([self.n, 15])
+        self.sigma_pts_x_bar = np.zeros([self.n, 15])
         self.sigma_pts_u = np.zeros([2, 15])
         self.sigma_pts_z = np.zeros([2, 15])
+        self.wm = np.zeros([len(self.sigma_pts_x[0]), 1])
+        self.wc = np.zeros([len(self.sigma_pts_x[0]), 1])
 
         # Landmark Locations
         self.nl = nl
@@ -83,54 +87,55 @@ class UKF:
 
 
     def AddMeasurement(self, z):
-        for j in range(self.nl):
-            dx = (self.c[j, 0] - self.mu_bar[0])[0]
-            dy = (self.c[j, 1] - self.mu_bar[1])[0]
-            q = np.power(dx, 2) + np.power(dy, 2)
-            z_hat = np.array([[np.sqrt(q)], [np.arctan2(dy, dx) - self.mu_bar[2, 0]]])
-            H = np.array([[-dx/np.sqrt(q), -dy/np.sqrt(q), 0], [dy/q, -dx/q, -1]])
-            S = H @ (self.cov_bar @ H.transpose()) + self.Q
-            K = self.cov_bar @ (H.transpose() @ np.linalg.inv(S))
-            self.mu_bar = self.mu_bar + K @ (z[(0+j*2):(2+j*2)] - z_hat)
-            self.cov_bar = (np.eye(3) - (K @ H)) @ self.cov_bar
-        self.mu = self.mu_bar
-        self.cov = self.cov_bar
+        Z_bar = np.zeros(np.shape(self.sigma_pts_z))
+        for j in range(len(self.sigma_pts_x_bar[0])):
+            x = self.sigma_pts_x_bar[0, j]
+            y = self.sigma_pts_x_bar[1, j]
+            theta = self.sigma_pts_x_bar[2, j]
+            Z_bar[0, j] = np.sqrt(np.power(self.c[0, 0] - x, 2) + np.power(self.c[0, 1] - y, 2))
+            Z_bar[1, j] = np.arctan2(self.c[0, 1] - y, self.c[0, 0] - x) - theta
+        Z_bar = Z_bar + self.sigma_pts_z
+        z_hat = Z_bar @ self.wm
+        S = np.zeros([len(z_hat), len(z_hat)])
+        for k in range(len(Z_bar[0])):
+            S += (self.wc[k] * ((Z_bar[:, k].reshape(np.shape(z_hat)) - z_hat) @ (Z_bar[:, k].reshape(np.shape(z_hat)) - z_hat).transpose()))
+        cov_xz = np.zeros([len(self.sigma_pts_x_bar), len(z_hat)])
+        for l in range(len(Z_bar[0])):
+            cov_xz += (self.wc[l] * ((self.sigma_pts_x_bar[:, l].reshape(np.shape(self.mu_bar)) - self.mu_bar) @ (Z_bar[:, l].reshape(np.shape(z_hat)) - z_hat).transpose()))
+        K = cov_xz @ np.linalg.inv(S)
+        self.mu = self.mu_bar + K @ (z-z_hat)
+        self.cov = self.cov_bar - K @ (S @ K.transpose())
         self.K = K.reshape((6, 1))
 
     def GenerateSigmaPoints(self):
         sigma_pts_a = np.hstack([self.mu_a, self.mu_a + self.gamma*np.linalg.cholesky(self.cov_a), self.mu_a - self.gamma*np.linalg.cholesky(self.cov_a)])
-        L = 2*self.n + 1
-        i = 2*L + 1
+        i = 2*self.L + 1
         self.sigma_pts_x = sigma_pts_a[0:self.n, 0:i]
         self.sigma_pts_u = sigma_pts_a[self.n:self.n + 2, 0:i]
         self.sigma_pts_z = sigma_pts_a[self.n+2:self.n + 4, 0:i]
 
     def PropogateSigmaPoints(self, ctl_pts, state_pts):
-        sigma_pts_x_bar = np.zeros(np.shape(self.sigma_pts_x))
+        self.sigma_pts_x_bar = np.zeros(np.shape(self.sigma_pts_x))
 
-        for i in range(len(sigma_pts_x_bar[0])):
+        for i in range(len(self.sigma_pts_x_bar[0])):
             vt = ctl_pts[0, i]
             wt = ctl_pts[1, i]
             x = state_pts[0, i]
             y = state_pts[1, i]
             theta = state_pts[2, i]
-            sigma_pts_x_bar[0, i] = x + (-(vt/wt)*np.sin(theta)+(vt/wt)*np.sin(theta+wt*self.dt))
-            sigma_pts_x_bar[1, i] = y + (vt/wt)*np.cos(theta)-(vt/wt)*np.cos(theta+wt*self.dt)
-            sigma_pts_x_bar[2, i] = theta + wt*self.dt
+            self.sigma_pts_x_bar[0, i] = x + (-(vt/wt)*np.sin(theta)+(vt/wt)*np.sin(theta+wt*self.dt))
+            self.sigma_pts_x_bar[1, i] = y + (vt/wt)*np.cos(theta)-(vt/wt)*np.cos(theta+wt*self.dt)
+            self.sigma_pts_x_bar[2, i] = theta + wt*self.dt
 
         # Define weights
-        wm = np.zeros([len(self.sigma_pts_x[0]), 1])
-        wc = np.zeros([len(self.sigma_pts_x[0]), 1])
-        wm[0] = self.lmbda / (self.n + self.lmbda)
-        wc[0] = wm[0] + (1 - self.alpha ** 2 + self.beta)
-        for j in range(1, len(sigma_pts_x_bar[0])):
-            wm[j] = 1/(2*(self.n + self.lmbda))
-            wc[j] = 1/(2*(self.n + self.lmbda))
+        self.wm[0] = self.lmbda / (self.L + self.lmbda)
+        self.wc[0] = self.wm[0] + (1 - self.alpha ** 2 + self.beta)
+        for j in range(1, len(self.sigma_pts_x_bar[0])):
+            self.wm[j] = 1/(2*(self.L + self.lmbda))
+            self.wc[j] = 1/(2*(self.L + self.lmbda))
 
-        self.mu_bar = sigma_pts_x_bar @ wm
+        self.mu_bar = self.sigma_pts_x_bar @ self.wm
         cov_temp = np.zeros(np.shape(self.cov))
-        for k in range(len(sigma_pts_x_bar[0])):
-            cov_temp = cov_temp + (wc[k] * ((sigma_pts_x_bar[:, k] - self.mu_bar) @ (sigma_pts_x_bar[:, k] - self.mu_bar).transpose()))
+        for k in range(len(self.sigma_pts_x_bar[0])):
+            cov_temp += (self.wc[k] * ((self.sigma_pts_x_bar[:, k].reshape(np.shape(self.mu_bar)) - self.mu_bar) @ (self.sigma_pts_x_bar[:, k].reshape(np.shape(self.mu_bar)) - self.mu_bar).transpose()))
         self.cov_bar = cov_temp
-
-
