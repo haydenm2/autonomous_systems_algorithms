@@ -2,10 +2,9 @@
 
 import numpy as np
 
-# Generic Unscented Kalman Filter Approach (From Probablistic Robotics)
+# Generic Monte Carlo Localization Filter Approach (From Probablistic Robotics)
 
-
-class UKF:
+class MCL:
     def __init__(self, c, nl, dt=0.1, x0=np.array([[-5], [-3], [90*np.pi/180.0]])):
         self.mu = np.copy(x0)                        # state mean vector
         self.mu_a = np.hstack((self.mu.transpose(), np.zeros((1, 4)))).transpose()
@@ -45,6 +44,9 @@ class UKF:
         # Landmark Locations
         self.nl = nl
         self.c = c
+
+        # Particle parameters
+        self.pts = 1000
 
     def Propogate(self, u, z):
         self.PredictState(u)
