@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+from scipy.stats import norm
 
 # Generic Monte Carlo Localization Filter Approach (From Probablistic Robotics)
 
@@ -47,11 +48,45 @@ class MCL:
 
         # Particle parameters
         self.pts = 1000
+        self.X_prev = np.zeros([self.n + 1, self.pts])
+        for i in range(self.pts):
+            self.X_prev[0, i] = (2*np.random.rand()-1)*10
+            self.X_prev[1, i] = (2*np.random.rand()-1)*10
+        self.X_bar = np.empty([self.n + 1, 0])
+        # self.X = np.empty([self.n + 1, 0])
+        self.X = np.copy(self.X_prev)
 
     def Propogate(self, u, z):
         self.PredictState(u)
         for i in range(int(len(z)/2)):
             self.AddMeasurement(z[2*i:2*(i+1)], i)
+
+        for m in range(self.pts):
+            xt = self.SampleMotionModel(u, self.X_prev[:, m].reshape(self.n+1, 1))
+            wt = self.MeasurementModel(z, xt)
+            x = np.vstack((xt, wt))
+            self.X_bar = np.hstack((self.X_bar, x))
+        self.X = self.X_bar
+        self.X_bar = np.empty([self.n + 1, 0])
+        self.X_prev = self.X
+
+    def SampleMotionModel(self, u, xprev):
+        v_hat = u[0] + np.sqrt(self.a_1 * np.power(u[0], 2) + self.a_2 * np.power(u[1], 2)) * np.random.randn()
+        w_hat = u[1] + np.sqrt(self.a_3 * np.power(u[0], 2) + self.a_4 * np.power(u[1], 2)) * np.random.randn()
+        x = np.zeros([3, 1])
+        x[0] = xprev[0] - (v_hat / w_hat) * np.sin(xprev[2]) + (v_hat / w_hat) * np.sin(xprev[2] + w_hat * self.dt)
+        x[1] = xprev[1] + (v_hat / w_hat) * np.cos(xprev[2]) - (v_hat / w_hat) * np.cos(xprev[2] + w_hat * self.dt)
+        x[2] = xprev[2] + w_hat * self.dt
+        return x
+
+    def MeasurementModel(self, z, x):
+        q = np.zeros([1, len(z)])
+        for i in range(len(z)):
+            r = np.sqrt((self.c[i, 0] - x[0])**2 + (self.c[i, 1] - x[1])**2)
+            phi = np.arctan2(self.c[i, 1] - x[1], self.c[i, 0] - x[0])
+            q[i] = norm(0, self.sig_r).pdf(z[0, i]-r[0]) * norm(0, self.sig_phi).pdf(z[1, i]-phi[0])
+        w = np.array([[np.random.rand()]])
+        return w
 
     def PredictState(self, u):
 

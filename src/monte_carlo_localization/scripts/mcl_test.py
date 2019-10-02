@@ -33,13 +33,14 @@ def InitPlot(twr, body_radius):
     msensor, = ax.plot([], [], 'ro', zorder=5)
     for i in range(twr.nl):
         ax.plot(twr.c[i, 0], twr.c[i, 1], 'o', zorder=6)
+    mparticles, = ax.plot([], [], 'r.', zorder=7, markersize=3)
     ax.set_xlim([-10, 10])
     ax.set_ylim([-10, 10])
     ax.grid()
-    return fig, lines, lines_est, msensor, robot_body, robot_head
+    return fig, lines, lines_est, msensor, mparticles, robot_body, robot_head
 
 
-def UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos):
+def UpdatePlot(fig, lines, lines_est, msensor, mparticles, robot_body, body_radius, robot_head, twr, mu, zpos, X):
     xt = twr.x[0:2, :]  # position truth
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
@@ -47,6 +48,8 @@ def UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_he
     lines_est.set_ydata(mu[1, :])
     msensor.set_xdata(zpos[0, :])
     msensor.set_ydata(zpos[1, :])
+    mparticles.set_xdata(X[0, :])
+    mparticles.set_ydata(X[1, :])
 
     robot_body.center = ((twr.Getx())[0], (twr.Getx())[1])
     headx = np.array([twr.Getx()[0], twr.Getx()[0] + body_radius * np.cos(twr.Getx()[2])])
@@ -67,7 +70,7 @@ if __name__ == "__main__":
     mcl = MCL(twr.c, twr.nl)
 
     body_radius = 0.3
-    fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
+    fig, lines, lines_est, msensor, mparticles, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = mcl.mu
     K = mcl.K
     two_sig_x = np.array([[2 * np.sqrt(mcl.cov.item((0, 0)))], [-2 * np.sqrt(mcl.cov.item((0, 0)))]])
@@ -83,7 +86,8 @@ if __name__ == "__main__":
         K = np.hstack((K, mcl.K))
         # zpos = np.hstack((zpos, twr.Getzpos())) # Historical sensor plotting
         zpos = twr.Getzpos() # Immediate sensor plotting
-        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos)
+        X = mcl.X
+        UpdatePlot(fig, lines, lines_est, msensor, mparticles, robot_body, body_radius, robot_head, twr, mu, zpos, X)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(mcl.cov.item((0, 0)))], [-2 * np.sqrt(mcl.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(mcl.cov.item((1, 1)))], [-2 * np.sqrt(mcl.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(mcl.cov.item((2, 2)))], [-2 * np.sqrt(mcl.cov.item((2, 2)))]])))
