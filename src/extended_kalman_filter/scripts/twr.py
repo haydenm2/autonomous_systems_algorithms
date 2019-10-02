@@ -46,16 +46,9 @@ class TWR:
         self.c[1] = np.array([-7, 8])
         self.c[2] = np.array([6, -4])
 
-        A = loadmat("hw2_soln_data.mat")
-        self.xmat = A['x']
-        self.ymat = A['y']
-        self.thmat = A['th']
-        self.it = 0
-
         # Plot data containers
         self.x = np.zeros([3, 1])  # state truth vector
-        # self.x = np.array([[-5], [-3], [90*(np.pi/180)]])   # initial states
-        self.x = np.array([[self.xmat[0, self.it]], [self.ymat[0, self.it]], [self.thmat[0, self.it]]])   # initial states
+        self.x = np.array([[-5], [-3], [90*(np.pi/180)]])   # initial states
         self.z = np.zeros([2, self.nl])  # measurement vector
         for i in range(self.nl):
             self.z[0, i] = np.sqrt(np.power(self.c[i, 0] - self.x[0], 2) + np.power(self.c[i, 1] - self.x[1], 2)) + self.sig_r*np.random.randn()
@@ -82,13 +75,9 @@ class TWR:
         v = self.u_new[0] + np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
         w = self.u_new[1] + np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
         gamma = 0
-        # self.x_new[0] = self.x[0, len(self.x[0])-1] - (v/w) * np.sin(self.x[2, len(self.x[0])-1]) + (v/w) * np.sin(self.x[2, len(self.x[0])-1] + w*self.dt)
-        # self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
-        # self.x_new[2] = self.x[2, len(self.x[0])-1] + w * self.dt + gamma * self.dt
-        #
-        self.x_new[0] = self.xmat[0, self.it]
-        self.x_new[1] = self.ymat[0, self.it]
-        self.x_new[2] = self.thmat[0, self.it]
+        self.x_new[0] = self.x[0, len(self.x[0])-1] - (v/w) * np.sin(self.x[2, len(self.x[0])-1]) + (v/w) * np.sin(self.x[2, len(self.x[0])-1] + w*self.dt)
+        self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
+        self.x_new[2] = self.x[2, len(self.x[0])-1] + w * self.dt + gamma * self.dt
 
         for i in range(self.nl):
             self.z_new[0, i] = np.sqrt(np.power(self.c[i, 0] - self.x_new[0], 2) + np.power(self.c[i, 1] - self.x_new[1], 2)) + self.sig_r*np.random.randn()
