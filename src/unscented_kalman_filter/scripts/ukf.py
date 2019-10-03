@@ -33,7 +33,7 @@ class UKF:
         self.kappa = 4
         self.alpha = 0.4
         self.beta = 2
-        self.lmbda = self.alpha**2 * (self.L + self.kappa) - self.n
+        self.lmbda = self.alpha**2 * (self.L + self.kappa) - self.L
         self.gamma = np.sqrt(self.L + self.lmbda)
         self.sigma_pts_x = np.zeros([self.n, 15])
         self.sigma_pts_x_bar = np.zeros([self.n, 15])
@@ -97,10 +97,8 @@ class UKF:
             self.wc[j] = 1/(2*(self.L + self.lmbda))
 
         self.mu_bar = self.sigma_pts_x_bar @ self.wm
-        cov_temp = np.zeros(np.shape(self.cov))
-        for k in range(len(self.sigma_pts_x_bar[0])):
-            cov_temp += (self.wc[k] * ((self.sigma_pts_x_bar[:, k].reshape(np.shape(self.mu_bar)) - self.mu_bar) @ (self.sigma_pts_x_bar[:, k].reshape(np.shape(self.mu_bar)) - self.mu_bar).transpose()))
-        self.cov_bar = cov_temp
+        sTw = np.multiply(self.wc, (self.sigma_pts_x_bar - self.mu_bar).transpose())
+        self.cov_bar = (self.sigma_pts_x_bar - self.mu_bar) @ sTw
 
     def AddMeasurement(self, z, i):
         self.GenerateSigmaPoints(self.mu_bar, self.cov_bar)

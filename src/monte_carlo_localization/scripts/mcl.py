@@ -80,12 +80,12 @@ class MCL:
         return x
 
     def MeasurementModel(self, z, x):
-        q = np.zeros([1, len(z)])
-        for i in range(len(z)):
+        q = np.zeros([1, int(len(z)/2)])
+        for i in range(int(len(z)/2)):
             r = np.sqrt((self.c[i, 0] - x[0])**2 + (self.c[i, 1] - x[1])**2)
             phi = np.arctan2(self.c[i, 1] - x[1], self.c[i, 0] - x[0])
-            q[i] = norm(0, self.sig_r).pdf(z[0, i]-r[0]) * norm(0, self.sig_phi).pdf(z[1, i]-phi[0])
-        w = np.array([[np.random.rand()]])
+            q[0, i] = norm(0, self.sig_r).pdf(z[2*i]-r[0]) * norm(0, self.sig_phi).pdf(np.mod(z[2*i+1]-phi[0], np.pi))
+        w = np.array([np.prod(q)])
         return w
 
     def PredictState(self, u):
