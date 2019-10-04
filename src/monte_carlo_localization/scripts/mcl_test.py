@@ -73,6 +73,11 @@ if __name__ == "__main__":
     fig, lines, lines_est, msensor, mparticles, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = mcl.mu
     K = mcl.K
+
+    zpos = twr.Getzpos()  # Immediate sensor plotting
+    X = mcl.X
+    UpdatePlot(fig, lines, lines_est, msensor, mparticles, robot_body, body_radius, robot_head, twr, mu, np.array([0, 0, 0, 0, 0, 0]).reshape((6, 1)), X)
+
     two_sig_x = np.array([[2 * np.sqrt(mcl.cov.item((0, 0)))], [-2 * np.sqrt(mcl.cov.item((0, 0)))]])
     two_sig_y = np.array([[2 * np.sqrt(mcl.cov.item((1, 1)))], [-2 * np.sqrt(mcl.cov.item((1, 1)))]])
     two_sig_theta = np.array([[2 * np.sqrt(mcl.cov.item((2, 2)))], [-2 * np.sqrt(mcl.cov.item((2, 2)))]])
@@ -84,7 +89,6 @@ if __name__ == "__main__":
         # plotter updates
         mu = np.hstack((mu, mcl.mu))
         K = np.hstack((K, mcl.K))
-        # zpos = np.hstack((zpos, twr.Getzpos())) # Historical sensor plotting
         zpos = twr.Getzpos() # Immediate sensor plotting
         X = mcl.X
         UpdatePlot(fig, lines, lines_est, msensor, mparticles, robot_body, body_radius, robot_head, twr, mu, zpos, X)

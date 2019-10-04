@@ -48,27 +48,30 @@ class MCL:
 
         # Particle parameters
         self.pts = 1000
-        self.X_prev = np.zeros([self.n + 1, self.pts])
+        self.X = np.zeros([self.n, self.pts])
         for i in range(self.pts):
-            self.X_prev[0, i] = (2*np.random.rand()-1)*10
-            self.X_prev[1, i] = (2*np.random.rand()-1)*10
-        self.X_bar = np.empty([self.n + 1, 0])
-        # self.X = np.empty([self.n + 1, 0])
-        self.X = np.copy(self.X_prev)
+            self.X[0, i] = (2*np.random.rand()-1)*10
+            self.X[1, i] = (2*np.random.rand()-1)*10
+            self.X[2, i] = (2*np.random.rand()-1)*np.pi
+        self.X_bar = np.empty([self.n, 0])
+        self.W_bar = np.empty([1, 0])
+        self.W = np.copy(self.W_bar)
 
     def Propogate(self, u, z):
         self.PredictState(u)
         for i in range(int(len(z)/2)):
             self.AddMeasurement(z[2*i:2*(i+1)], i)
 
+        self.X_bar = np.empty([self.n, 0])
+        self.W_bar = np.empty([1, 0])
         for m in range(self.pts):
-            xt = self.SampleMotionModel(u, self.X_prev[:, m].reshape(self.n+1, 1))
-            wt = self.MeasurementModel(z, xt)
-            x = np.vstack((xt, wt))
+            x = self.SampleMotionModel(u, self.X[:, m].reshape(self.n, 1))
+            w = self.MeasurementModel(z, x)
             self.X_bar = np.hstack((self.X_bar, x))
-        self.X = self.X_bar
-        self.X_bar = np.empty([self.n + 1, 0])
-        self.X_prev = self.X
+            self.W_bar = np.hstack((self.W_bar, w.reshape((1, 1))))
+        self.W_bar = self.W_bar / np.linalg.norm(self.W_bar)
+        self.W = self.W_bar
+        self.Resample()
 
     def SampleMotionModel(self, u, xprev):
         v_hat = u[0] + np.sqrt(self.a_1 * np.power(u[0], 2) + self.a_2 * np.power(u[1], 2)) * np.random.randn()
@@ -84,9 +87,37 @@ class MCL:
         for i in range(int(len(z)/2)):
             r = np.sqrt((self.c[i, 0] - x[0])**2 + (self.c[i, 1] - x[1])**2)
             phi = np.arctan2(self.c[i, 1] - x[1], self.c[i, 0] - x[0])
-            q[0, i] = norm(0, self.sig_r).pdf(z[2*i]-r[0]) * norm(0, self.sig_phi).pdf(np.mod(z[2*i+1]-phi[0], np.pi))
+            q[0, i] = norm(0, self.sig_r).pdf(z[2*i]-r[0]) * 1e300 * norm(0, self.sig_phi).pdf(self.Wrap(z[2*i+1]-phi[0]))
         w = np.array([np.prod(q)])
         return w
+
+    def Resample(self):
+        X_bar = np.empty([self.n, 0])
+        self.W_bar = np.empty([1, 0])
+        Minv = 1/self.pts
+        r = np.random.uniform(low=0, high=Minv)
+        c = self.W[0, 0]
+        i = 0
+        for m in range(self.pts):
+            U = r + m*Minv
+            while U > c:
+                i = i+1
+                c = c + self.W[0, i]
+            X_bar = np.hstack((X_bar, self.X[:, i].reshape((3, 1))))
+        self.X = X_bar
+
+    def Wrap(self, th):
+        th_wrap = np.fmod(th, np.pi)
+        return th_wrap
+
+
+
+
+
+
+
+
+
 
     def PredictState(self, u):
 
