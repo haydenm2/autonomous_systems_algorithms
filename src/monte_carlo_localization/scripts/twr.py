@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import control as ct
 
 # Generic model of Two-Wheeled Robot operating on a 20mx20m field. Three landmarks
 # are continuously visible to the robot. Robot can measure range and bearing to each landmark.
