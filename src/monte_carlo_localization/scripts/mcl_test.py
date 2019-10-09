@@ -72,7 +72,6 @@ if __name__ == "__main__":
     body_radius = 0.3
     fig, lines, lines_est, msensor, mparticles, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = mcl.mu
-    K = mcl.K
 
     zpos = twr.Getzpos()  # Immediate sensor plotting
     X = mcl.X
@@ -88,7 +87,6 @@ if __name__ == "__main__":
 
         # plotter updates
         mu = np.hstack((mu, mcl.mu))
-        K = np.hstack((K, mcl.K))
         zpos = twr.Getzpos() # Immediate sensor plotting
         X = mcl.X
         UpdatePlot(fig, lines, lines_est, msensor, mparticles, robot_body, body_radius, robot_head, twr, mu, zpos, X)
@@ -151,6 +149,7 @@ if __name__ == "__main__":
     plt.title('Position Estimation Error and Covariance Behavior')
     plt.legend()
     plt.grid(True)
+    plt.ylim((-0.35, 0.35))
 
     # Plot position y error and covariance of states
     plt.subplot(312)
@@ -160,6 +159,7 @@ if __name__ == "__main__":
     plt.ylabel('y (m)')
     plt.legend()
     plt.grid(True)
+    plt.ylim((-0.35, 0.35))
 
     # Plot position theta error and covariance of states
     plt.subplot(313)
@@ -170,18 +170,6 @@ if __name__ == "__main__":
     plt.xlabel('t (s)')
     plt.legend()
     plt.grid(True)
+    plt.ylim((-0.25, 0.25))
 
-    # Plot kalman gain propogation
-    plt.figure(4)
-    plt.plot(twr.t, K[0, :], label='Kalman Gain 1')
-    plt.plot(twr.t, K[1, :], label='Kalman Gain 2')
-    plt.plot(twr.t, K[2, :], label='Kalman Gain 3')
-    plt.plot(twr.t, K[3, :], label='Kalman Gain 4')
-    plt.plot(twr.t, K[4, :], label='Kalman Gain 5')
-    plt.plot(twr.t, K[5, :], label='Kalman Gain 6')
-    plt.ylabel('K')
-    plt.xlabel('t (s)')
-    plt.title('Kalman Gain Behavior')
-    plt.legend()
-    plt.grid(True)
     plt.show()

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import control as ct
 
 # Generic model of Two-Wheeled Robot operating on a 20mx20m field. Three landmarks
 # are continuously visible to the robot. Robot can measure range and bearing to each landmark.
@@ -61,8 +60,6 @@ class TWR:
         self.u_new = np.array([[1.5], [1.8]])
         self.t_new = np.zeros(1)
         self.z_new = np.zeros([2, self.nl])
-
-
 
     def Propagate(self):
 

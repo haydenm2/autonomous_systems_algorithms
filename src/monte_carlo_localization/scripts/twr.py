@@ -13,7 +13,7 @@ import numpy as np
 # Velocity commands given by:
 #
 # v_c = 1 + 0.5*cos*2*pi*(0.2)*t)
-# w_c = -0.2 + 2*cos(2*pi*(o.6)*t)
+# w_c = -0.2 + 2*cos(2*pi*(0.6)*t)
 #
 # Velocities experienced by robot are noisy versions of commanded velocities with noise characteristics:
 # a_1 = a_4 = 0.1 and a_2 = a_3 = 0.01
@@ -35,6 +35,9 @@ class TWR:
         self.a_2 = 0.01
         self.a_3 = 0.01
         self.a_4 = 0.1
+        self.a_5 = 0.01
+        self.a_6 = 0.01
+
         self.sig_r = 0.1
         self.sig_phi = 0.05
 
@@ -70,7 +73,7 @@ class TWR:
 
         v = self.u_new[0] + np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
         w = self.u_new[1] + np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
-        gamma = 0
+        gamma = np.sqrt(self.a_5 * np.power(self.u_new[0], 2) + self.a_6 * np.power(self.u_new[1], 2)) * np.random.randn()
         self.x_new[0] = self.x[0, len(self.x[0])-1] - (v/w) * np.sin(self.x[2, len(self.x[0])-1]) + (v/w) * np.sin(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[2] = self.x[2, len(self.x[0])-1] + w * self.dt + gamma * self.dt
