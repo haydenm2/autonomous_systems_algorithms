@@ -29,9 +29,9 @@ class MCL:
         self.c = c
 
         # Particle parameters
-        self.pts = 1000
-        self.X = np.zeros([self.n, self.pts])
-        for i in range(self.pts):
+        self.M = 1000
+        self.X = np.zeros([self.n, self.M])
+        for i in range(self.M):
             self.X[0, i] = (2*np.random.rand()-1)*10
             self.X[1, i] = (2*np.random.rand()-1)*10
             self.X[2, i] = (2*np.random.rand()-1)*np.pi
@@ -49,7 +49,7 @@ class MCL:
         self.W_bar = self.MeasurementModel(z, self.X_bar)
 
         # # iterative approach
-        # for m in range(self.pts):
+        # for m in range(self.M):
         #     x = self.PropogateMotionModel(u, self.X[:, m].reshape(self.n, 1))
         #     w = self.MeasurementModel(z, x)
         #     self.X_bar = np.hstack((self.X_bar, x))
@@ -100,11 +100,11 @@ class MCL:
     def Resample(self):
         X_bar = np.empty([self.n, 0])
         self.W_bar = np.empty([1, 0])
-        Minv = 1/self.pts
+        Minv = 1/self.M
         r = np.random.uniform(low=0, high=Minv)
         c = self.W[0, 0]
         i = 0
-        for m in range(self.pts):
+        for m in range(self.M):
             U = r + m*Minv
             while U > c:
                 i = i+1
