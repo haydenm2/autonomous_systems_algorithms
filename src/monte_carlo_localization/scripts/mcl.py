@@ -110,6 +110,12 @@ class MCL:
                 i = i+1
                 c = c + self.W[0, i]
             X_bar = np.hstack((X_bar, self.X_bar[:, i].reshape((3, 1))))
+        uniq = len(np.unique(X_bar))
+
+        # introduce synthetic noise if convergence is too fast
+        if uniq/self.M < 0.5:
+            Q = self.cov/((self.M*uniq)**(1/self.n))
+            X_bar = X_bar + Q @ np.random.randn(np.shape(X_bar)[0], np.shape(X_bar)[1])
         self.X = X_bar
 
     def Wrap(self, th):
