@@ -34,7 +34,7 @@ def UpdatePlot(fig, lines, robot_body, body_radius, robot_head, xt, map):
     robot_head.set_ydata(heady)
 
     fig.canvas.draw()
-    plt.imshow(map)
+    plt.imshow(map, "Greys")
     plt.pause(0.01)
 
 
@@ -51,9 +51,10 @@ if __name__ == "__main__":
     body_radius = 1.5
     fig, lines, robot_body, robot_head = InitPlot(ogm, body_radius)
     xt = X[:, 0].reshape(3, 1)
-    UpdatePlot(fig, lines, robot_body, body_radius, robot_head, xt, ogm.map)
+    UpdatePlot(fig, lines, robot_body, body_radius, robot_head, xt, ogm.map[2, :, :])
     for i in range(len(X[0])):
         # truth model updates
-        ogm.Update()
+        ogm.Update(X[:, iter].reshape(3, 1), z[:, :, iter])
         iter += 1
-        UpdatePlot(fig, lines, robot_body, body_radius, robot_head, X[:, 0:iter], ogm.map)
+        UpdatePlot(fig, lines, robot_body, body_radius, robot_head, X[:, 0:iter], ogm.map[2, :, :])
+        plt.pause(0.01)
