@@ -12,13 +12,14 @@ class OGM:
         self.cell_size = cell_size
         self.l_cells = int(grid_l/self.cell_size)
         self.w_cells = int(grid_w/self.cell_size)
-        self.init_val = 0.5
+        self.p_init = 0.5
+        self.l_init = self.p2l(self.p_init)
         self.map = np.zeros((3, self.l_cells, self.w_cells))
         for i in range(self.grid_size[0]):
             for j in range(self.grid_size[1]):
                 self.map[0, i, j] = self.cell_size * (0.5 + j)
                 self.map[1, i, j] = self.cell_size * (0.5 + i)
-                self.map[2, i, j] = self.init_val
+                self.map[2, i, j] = self.p_init
         self.num_cells = self.l_cells * self.w_cells
 
         # inverse range sensor model parameters
@@ -36,25 +37,26 @@ class OGM:
         for i in range(self.l_cells):
             for j in range(self.w_cells):
                 self.InverseRangeSensorModel(self.map[:, i, j], x, z)
-        self.map[2, :, :] = self.l2p(self.map[2, :, :])*255
+        self.map[2, :, :] = self.l2p(self.map[2, :, :])
         pass
 
     def InverseRangeSensorModel(self, m, xt, zt):
         xi = m[0]
         yi = m[1]
-        l_0 = m[2]
+        l_prev = m[2]
         x = xt[0]
         y = xt[1]
         theta = xt[2]
         r = np.sqrt((xi-x)**2+(yi-y)**2)
         phi = np.arctan2(yi-y, xi-x)-theta
-        k = np.argmin(np.abs(phi-zt[1, :]))
-        if (r > min(self.z_max, zt[0, k] + self.alpha/2)) or (np.abs(phi-zt[1, k]) > self.beta/2):
-            m[2] = l_0
-        if (zt[0, k] < self.z_max) and (np.abs(r-zt[0, k]) < self.alpha/2):
-            m[2] = self.l_occ
-        if r <= zt[0, k]:
-            m[2] = self.l_free
+        k = np.argmin(np.abs(self.Wrap(phi-zt[1, :])))
+        zt = np.nan_to_num(zt)
+        if (r > min(self.z_max, zt[0, k] + self.alpha/2)) or (np.abs(self.Wrap(phi-zt[1, k])) > self.beta/2):
+            m[2] = l_prev + self.l_init - self.l_init
+        elif (zt[0, k] < self.z_max) and (np.abs(r-zt[0, k]) < self.alpha/2):
+            m[2] = l_prev + self.l_occ - self.l_init
+        elif r <= zt[0, k]:
+            m[2] = l_prev + self.l_free - self.l_init
         pass
 
     def Wrap(self, th):

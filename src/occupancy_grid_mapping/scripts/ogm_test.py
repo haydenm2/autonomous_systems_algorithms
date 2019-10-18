@@ -51,10 +51,10 @@ if __name__ == "__main__":
     body_radius = 1.5
     fig, lines, robot_body, robot_head = InitPlot(ogm, body_radius)
     xt = X[:, 0].reshape(3, 1)
-    UpdatePlot(fig, lines, robot_body, body_radius, robot_head, xt, ogm.map[2, :, :])
+    UpdatePlot(fig, lines, robot_body, body_radius, robot_head, xt, ogm.map[2, :, :]*255)
     for i in range(len(X[0])):
         # truth model updates
         ogm.Update(X[:, iter].reshape(3, 1), z[:, :, iter])
         iter += 1
-        UpdatePlot(fig, lines, robot_body, body_radius, robot_head, X[:, 0:iter], ogm.map[2, :, :])
+        UpdatePlot(fig, lines, robot_body, body_radius, robot_head, X[:, 0:iter], ogm.map[2, :, :]*255)
         plt.pause(0.01)
