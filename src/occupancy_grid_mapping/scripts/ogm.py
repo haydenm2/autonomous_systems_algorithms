@@ -57,7 +57,6 @@ class OGM:
             m[2] = l_prev + self.l_occ - self.l_init
         elif r <= zt[0, k]:
             m[2] = l_prev + self.l_free - self.l_init
-        pass
 
     def Wrap(self, th):
         th_wrap = np.fmod(th + np.pi, 2*np.pi)
