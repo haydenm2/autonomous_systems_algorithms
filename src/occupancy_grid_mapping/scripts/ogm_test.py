@@ -11,7 +11,7 @@ from scipy.io import loadmat
 
 
 
-def InitPlot(ogm, body_radius):
+def InitPlot(ogm, body_radius, map):
     fig, ax = plt.subplots()
     lines, = ax.plot([], [], 'g--', zorder=1)
     robot_body = Circle((0, 0), body_radius, color='b', zorder=3)
@@ -20,10 +20,11 @@ def InitPlot(ogm, body_radius):
     ax.set_xlim([0, ogm.grid_size[0]])
     ax.set_ylim([0, ogm.grid_size[1]])
     ax.grid()
-    return fig, lines, robot_body, robot_head
+    img = ax.imshow(map, "Greys")
+    return lines, robot_body, robot_head, img
 
 
-def UpdatePlot(fig, lines, robot_body, body_radius, robot_head, xt, map):
+def UpdatePlot(lines, robot_body, body_radius, robot_head, img, xt, map):
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
 
@@ -32,9 +33,8 @@ def UpdatePlot(fig, lines, robot_body, body_radius, robot_head, xt, map):
     heady = np.array([xt[1, -1], xt[1, -1] + body_radius * np.sin(xt[2, -1])])
     robot_head.set_xdata(headx)
     robot_head.set_ydata(heady)
-
-    fig.canvas.draw()
-    plt.imshow(map, "Greys")
+    img.set_data(map)
+    img.autoscale()
     plt.pause(0.01)
 
 
@@ -49,12 +49,12 @@ if __name__ == "__main__":
     iter = 0
 
     body_radius = 1.5
-    fig, lines, robot_body, robot_head = InitPlot(ogm, body_radius)
+    lines, robot_body, robot_head, img = InitPlot(ogm, body_radius, ogm.map[2, :, :])
     xt = X[:, 0].reshape(3, 1)
-    UpdatePlot(fig, lines, robot_body, body_radius, robot_head, xt, ogm.map[2, :, :])
+    UpdatePlot(lines, robot_body, body_radius, robot_head, img, xt, ogm.map[2, :, :])
     for i in range(len(X[0])):
         # truth model updates
         ogm.Update(X[:, iter].reshape(3, 1), z[:, :, iter])
         iter += 1
-        UpdatePlot(fig, lines, robot_body, body_radius, robot_head, X[:, 0:iter], ogm.map[2, :, :])
+        UpdatePlot(lines, robot_body, body_radius, robot_head, img, X[:, 0:iter], ogm.map[2, :, :])
         plt.pause(0.01)
