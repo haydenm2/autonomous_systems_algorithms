@@ -78,7 +78,6 @@ class OGM:
         # overlay table probabilities
         m[2, :, :] = table1 + table2 + table3
 
-
     def InverseRangeSensorModel(self, m, xt, zt):
         xi = m[0]
         yi = m[1]
@@ -99,10 +98,6 @@ class OGM:
 
     def Wrap(self, th):
         th_wrap = (th + np.pi) % (2 * np.pi) - np.pi
-        # th_wrap = np.fmod(th + np.pi, 2*np.pi)
-        # for i in range(len(th_wrap)):
-        #     if th_wrap[i] < 0:
-        #         th_wrap[i] += 2*np.pi
         return th_wrap
 
     def p2l(self, p):

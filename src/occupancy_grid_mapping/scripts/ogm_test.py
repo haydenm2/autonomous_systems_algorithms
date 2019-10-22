@@ -21,10 +21,10 @@ def InitPlot(ogm, body_radius, map):
     ax.set_ylim([0, ogm.grid_size[1]])
     ax.grid()
     img = ax.imshow(map, "Greys")
-    return lines, robot_body, robot_head, img
+    return fig, lines, robot_body, robot_head, img
 
 
-def UpdatePlot(lines, robot_body, body_radius, robot_head, img, xt, map):
+def UpdatePlot(fig, lines, robot_body, body_radius, robot_head, img, xt, map):
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
 
@@ -49,12 +49,14 @@ if __name__ == "__main__":
     iter = 0
 
     body_radius = 1.5
-    lines, robot_body, robot_head, img = InitPlot(ogm, body_radius, ogm.map[2, :, :])
+    fig, lines, robot_body, robot_head, img = InitPlot(ogm, body_radius, ogm.map[2, :, :])
     xt = X[:, 0].reshape(3, 1)
-    UpdatePlot(lines, robot_body, body_radius, robot_head, img, xt, ogm.map[2, :, :])
+    UpdatePlot(fig, lines, robot_body, body_radius, robot_head, img, xt, ogm.map[2, :, :])
     for i in range(len(X[0])):
         # truth model updates
         ogm.Update(X[:, iter].reshape(3, 1), z[:, :, iter])
         iter += 1
-        UpdatePlot(lines, robot_body, body_radius, robot_head, img, X[:, 0:iter], ogm.map[2, :, :])
+        UpdatePlot(fig, lines, robot_body, body_radius, robot_head, img, X[:, 0:iter], ogm.map[2, :, :])
         plt.pause(0.01)
+
+    input("Press Enter to continue...")
