@@ -49,8 +49,8 @@ class OGM:
         theta = xt[2]
         r = np.sqrt((xi-x)**2+(yi-y)**2)
         phi = np.arctan2(yi-y, xi-x)-theta
+        zt = np.nan_to_num(zt, nan=0)
         k = np.argmin(np.abs(self.Wrap(phi-zt[1, :])))
-        zt = np.nan_to_num(zt)
         if (r > min(self.z_max, zt[0, k] + self.alpha/2)) or (np.abs(self.Wrap(phi-zt[1, k])) > self.beta/2):
             m[2] = l_prev + self.l_init - self.l_init
         elif (zt[0, k] < self.z_max) and (np.abs(r-zt[0, k]) < self.alpha/2):
