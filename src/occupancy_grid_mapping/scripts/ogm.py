@@ -34,11 +34,50 @@ class OGM:
         self.l_free = self.p2l(self.p_free)
 
     def Update(self, x, z):
-        for i in range(self.l_cells):
-            for j in range(self.w_cells):
-                self.InverseRangeSensorModel(self.map[:, i, j], x, z)
+        # # Iterative Update Approach
+        # for i in range(self.l_cells):
+        #     for j in range(self.w_cells):
+        #         self.InverseRangeSensorModel(self.map[:, i, j], x, z)
+
+        # Vectorized Update Approach
+        self.InverseRangeSensorModelVectorized(self.map, x, z)
+
+        # Convert Map from log-odds to standard probability map
         self.map[2, :, :] = self.l2p(self.map[2, :, :])
-        pass
+
+    def InverseRangeSensorModelVectorized(self, m, xt, zt):
+        xi = m[0, :, :]
+        yi = m[1, :, :]
+        l_prev = self.p2l(m[2, :, :])
+        x = xt[0]
+        y = xt[1]
+        theta = xt[2]
+        r = np.sqrt((xi-x)**2+(yi-y)**2)
+        phi = np.arctan2(yi-y, xi-x)-theta
+        zt = np.nan_to_num(zt, nan=0)
+        zphidiff = np.zeros((zt.shape[1], phi.shape[0], phi.shape[1]))
+        for i in range(zt.shape[1]):
+            zphidiff[i, :, :] = np.abs(self.Wrap(phi - zt[1, i]))
+        k = np.argmin(zphidiff, axis=0)
+
+        # inverse sensor model logical grid
+        table1 = np.logical_or((r > np.minimum(self.z_max, zt[0, k] + self.alpha/2)), (np.abs(self.Wrap(phi-zt[1, k])) > self.beta/2))
+        table2 = np.logical_and(np.logical_and((zt[0, k] < self.z_max), (np.abs(r-zt[0, k]) < self.alpha/2)), np.logical_not(table1))
+        table3 = np.logical_and(np.logical_and((r <= zt[0, k]), np.logical_not(table1)), np.logical_not(table2))
+
+        # convert logic tables from bool to double
+        table1 = (table1).astype(np.double)
+        table2 = (table2).astype(np.double)
+        table3 = (table3).astype(np.double)
+
+        # assign conditional values for each table
+        table1 *= l_prev + self.l_init - self.l_init
+        table2 *= l_prev + self.l_occ - self.l_init
+        table3 *= l_prev + self.l_free - self.l_init
+
+        # overlay table probabilities
+        m[2, :, :] = table1 + table2 + table3
+
 
     def InverseRangeSensorModel(self, m, xt, zt):
         xi = m[0]
@@ -59,11 +98,12 @@ class OGM:
             m[2] = l_prev + self.l_free - self.l_init
 
     def Wrap(self, th):
-        th_wrap = np.fmod(th + np.pi, 2*np.pi)
-        for i in range(len(th_wrap)):
-            if th_wrap[i] < 0:
-                th_wrap[i] += 2*np.pi
-        return th_wrap - np.pi
+        th_wrap = (th + np.pi) % (2 * np.pi) - np.pi
+        # th_wrap = np.fmod(th + np.pi, 2*np.pi)
+        # for i in range(len(th_wrap)):
+        #     if th_wrap[i] < 0:
+        #         th_wrap[i] += 2*np.pi
+        return th_wrap
 
     def p2l(self, p):
         l = np.log(p / (1 - p))
