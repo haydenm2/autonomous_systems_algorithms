@@ -43,7 +43,7 @@ class OGM:
     def InverseRangeSensorModel(self, m, xt, zt):
         xi = m[0]
         yi = m[1]
-        l_prev = m[2]
+        l_prev = self.p2l(m[2])
         x = xt[0]
         y = xt[1]
         theta = xt[2]
@@ -70,5 +70,5 @@ class OGM:
         return l
 
     def l2p(self, l):
-        p = np.exp(l)/(1 + np.exp(l))
+        p = 1 - 1/(1 + np.exp(l))
         return p
