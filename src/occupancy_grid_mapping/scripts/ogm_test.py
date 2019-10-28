@@ -59,4 +59,4 @@ if __name__ == "__main__":
         UpdatePlot(fig, lines, robot_body, body_radius, robot_head, img, X[:, 0:iter], ogm.map[2, :, :])
         plt.pause(0.01)
 
-    input("Press Enter to continue...")
+    plt.show()

@@ -8,23 +8,23 @@ from scipy.stats import norm
 class OGM:
     def __init__(self, grid_l, grid_w, cell_size):
         self.p = 0  # map certainty
-        self.grid_size = np.array([grid_l, grid_w])  # size of grid space
+        self.grid_size = np.array([grid_l+1, grid_w+1])  # size of grid space
         self.cell_size = cell_size
-        self.l_cells = int(grid_l/self.cell_size)
-        self.w_cells = int(grid_w/self.cell_size)
+        self.l_cells = int(self.grid_size[0]/self.cell_size)
+        self.w_cells = int(self.grid_size[1]/self.cell_size)
         self.p_init = 0.5
         self.l_init = self.p2l(self.p_init)
         self.map = np.zeros((3, self.l_cells, self.w_cells))
         for i in range(self.grid_size[0]):
             for j in range(self.grid_size[1]):
-                self.map[0, i, j] = self.cell_size * (0.5 + j)
-                self.map[1, i, j] = self.cell_size * (0.5 + i)
+                self.map[0, i, j] = self.cell_size * (0 + j)
+                self.map[1, i, j] = self.cell_size * (0 + i)
                 self.map[2, i, j] = self.p_init
         self.num_cells = self.l_cells * self.w_cells
 
         # inverse range sensor model parameters
         self.alpha = 1
-        self.beta = 5*np.pi/180
+        self.beta = 2*np.pi/180
         self.z_max = 150
 
         # probabilities assigned for occupied and free cell detections
@@ -54,7 +54,7 @@ class OGM:
         theta = xt[2]
         r = np.sqrt((xi-x)**2+(yi-y)**2)
         phi = np.arctan2(yi-y, xi-x)-theta
-        zt = np.nan_to_num(zt, nan=0)
+        zt = np.nan_to_num(zt)
         zphidiff = np.zeros((zt.shape[1], phi.shape[0], phi.shape[1]))
         for i in range(zt.shape[1]):
             zphidiff[i, :, :] = np.abs(self.Wrap(phi - zt[1, i]))
@@ -76,7 +76,7 @@ class OGM:
         table3 *= l_prev + self.l_free - self.l_init
 
         # overlay table probabilities
-        m[2, :, :] = table1 + table2 + table3
+        self.map[2, :, :] = table1 + table2 + table3
 
     def InverseRangeSensorModel(self, m, xt, zt):
         xi = m[0]
