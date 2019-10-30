@@ -66,3 +66,10 @@ class EIF:
             self.inf_vec = self.inf_vec_bar + H.transpose() @ np.linalg.inv(self.Q) @ (zt - self.h(self.mu_bar, self.c[j, :]) + H @ self.mu_bar)
         self.mu = np.linalg.inv(self.inf_mat) @ self.inf_vec
         self.cov = np.linalg.inv(self.inf_mat)
+
+    def Wrap(self, th):
+        th_wrap = np.fmod(th + np.pi, 2*np.pi)
+        for i in range(len(th_wrap)):
+            if th_wrap[i] < 0:
+                th_wrap[i] += 2*np.pi
+        return th_wrap - np.pi

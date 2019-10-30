@@ -67,7 +67,7 @@ if __name__ == "__main__":
     eif = EIF(quad.c, quad.nl, quad.g, quad.h)
 
     body_radius = 0.3
-    fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(quad, body_radius)
+    # fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(quad, body_radius)
     mu = eif.mu
     two_sig_x = np.array([[2 * np.sqrt(eif.cov.item((0, 0)))], [-2 * np.sqrt(eif.cov.item((0, 0)))]])
     two_sig_y = np.array([[2 * np.sqrt(eif.cov.item((1, 1)))], [-2 * np.sqrt(eif.cov.item((1, 1)))]])
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         # plotter updates
         mu = np.hstack((mu, eif.mu))
         zpos = quad.Getzpos()  # Perceived sensed landmark plotting values
-        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
+        # UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(eif.cov.item((0, 0)))], [-2 * np.sqrt(eif.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(eif.cov.item((1, 1)))], [-2 * np.sqrt(eif.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(eif.cov.item((2, 2)))], [-2 * np.sqrt(eif.cov.item((2, 2)))]])))
@@ -106,8 +106,8 @@ if __name__ == "__main__":
     # Plot position x truth and estimate
     plt.figure(2)
     plt.subplot(311)
-    plt.plot(quad.t, xe.reshape(1, len(xe)), 'c-', label='Position X Estimate')
-    plt.plot(quad.t, xt.reshape(1, len(xt)), 'b-', label='Position X Truth')
+    plt.plot(quad.t[0], xe, 'c-', label='Position X Estimate')
+    plt.plot(quad.t[0], xt, 'b-', label='Position X Truth')
     plt.ylabel('x (m)')
     plt.title('Position Truth and Estimate')
     plt.legend()
@@ -115,16 +115,16 @@ if __name__ == "__main__":
 
     # Plot position y truth and estimate
     plt.subplot(312)
-    plt.plot(quad.t, ye.reshape(1, len(ye)), 'c-', label='Position Y Estimate')
-    plt.plot(quad.t, yt.reshape(1, len(yt)), 'b-', label='Position Y Truth')
+    plt.plot(quad.t[0], ye, 'c-', label='Position Y Estimate')
+    plt.plot(quad.t[0], yt, 'b-', label='Position Y Truth')
     plt.ylabel('y (m)')
     plt.legend()
     plt.grid(True)
 
     # Plot position theta truth and estimate
     plt.subplot(313)
-    plt.plot(quad.t, thetae.reshape(1, len(thetae)), 'c-', label='Position Theta Estimate')
-    plt.plot(quad.t, thetat.reshape(1, len(thetat)), 'b-', label='Position Theta Truth')
+    plt.plot(quad.t[0], thetae, 'c-', label='Position Theta Estimate')
+    plt.plot(quad.t[0], thetat, 'b-', label='Position Theta Truth')
     plt.ylabel('theta (rad)')
     plt.xlabel('t (s)')
     plt.legend()
@@ -133,9 +133,9 @@ if __name__ == "__main__":
     # Plot position x error and covariance of states
     plt.figure(3)
     plt.subplot(311)
-    plt.plot(quad.t, xerr.reshape(1, len(xerr)), 'm-', label='Position X Error')
-    plt.plot(quad.t, xc_upper.reshape(1, len(xc_upper)), 'b--', label='Position X Covariance Bounds')
-    plt.plot(quad.t, xc_lower.reshape(1, len(xc_lower)), 'b--')
+    plt.plot(quad.t[0], xerr, 'm-', label='Position X Error')
+    plt.plot(quad.t[0], xc_upper, 'b--', label='Position X Covariance Bounds')
+    plt.plot(quad.t[0], xc_lower, 'b--')
     plt.ylabel('x (m)')
     plt.title('Position Estimation Error and Covariance Behavior')
     plt.legend()
@@ -143,18 +143,18 @@ if __name__ == "__main__":
 
     # Plot position y error and covariance of states
     plt.subplot(312)
-    plt.plot(quad.t, yerr.reshape(1, len(yerr)), 'm-', label='Position Y Error')
-    plt.plot(quad.t, yc_upper.reshape(1, len(yc_upper)), 'b--', label='Position Y Covariance Bounds')
-    plt.plot(quad.t, yc_lower.reshape(1, len(yc_lower)), 'b--')
+    plt.plot(quad.t[0], yerr, 'm-', label='Position Y Error')
+    plt.plot(quad.t[0], yc_upper, 'b--', label='Position Y Covariance Bounds')
+    plt.plot(quad.t[0], yc_lower, 'b--')
     plt.ylabel('y (m)')
     plt.legend()
     plt.grid(True)
 
     # Plot position theta error and covariance of states
     plt.subplot(313)
-    plt.plot(quad.t, thetaerr.reshape(1, len(thetaerr)), 'm-', label='Position Theta Error')
-    plt.plot(quad.t, thetac_upper.reshape(1, len(thetac_upper)), 'b--', label='Position Theta Covariance Bounds')
-    plt.plot(quad.t, thetac_lower.reshape(1, len(thetac_lower)), 'b--')
+    plt.plot(quad.t[0], thetaerr, 'm-', label='Position Theta Error')
+    plt.plot(quad.t[0], thetac_upper, 'b--', label='Position Theta Covariance Bounds')
+    plt.plot(quad.t[0], thetac_lower, 'b--')
     plt.ylabel('theta (rad)')
     plt.xlabel('t (s)')
     plt.legend()
