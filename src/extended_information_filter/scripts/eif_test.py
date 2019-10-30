@@ -39,12 +39,12 @@ def InitPlot(quad, body_radius):
     return fig, lines, lines_est, msensor, robot_body, robot_head
 
 
-def UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, zpos):
+def UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos):
     xt = quad.x[0:2, :]  # position truth
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
-    # lines_est.set_xdata(mu[0, :])
-    # lines_est.set_ydata(mu[1, :])
+    lines_est.set_xdata(mu[0, :])
+    lines_est.set_ydata(mu[1, :])
     msensor.set_xdata(zpos[0, :])
     msensor.set_ydata(zpos[1, :])
 
@@ -64,12 +64,11 @@ if __name__ == "__main__":
     quad = Quad()       # Quadrotor model object
 
     # Information Filter Init
-    eif = EIF(quad.c, quad.nl)
+    eif = EIF(quad.c, quad.nl, quad.g, quad.h)
 
     body_radius = 0.3
     fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(quad, body_radius)
     mu = eif.mu
-    K = eif.K
     two_sig_x = np.array([[2 * np.sqrt(eif.cov.item((0, 0)))], [-2 * np.sqrt(eif.cov.item((0, 0)))]])
     two_sig_y = np.array([[2 * np.sqrt(eif.cov.item((1, 1)))], [-2 * np.sqrt(eif.cov.item((1, 1)))]])
     two_sig_theta = np.array([[2 * np.sqrt(eif.cov.item((2, 2)))], [-2 * np.sqrt(eif.cov.item((2, 2)))]])
@@ -80,8 +79,7 @@ if __name__ == "__main__":
 
         # plotter updates
         mu = np.hstack((mu, eif.mu))
-        K = np.hstack((K, eif.K))
-        zpos = quad.Getzpos() # Perceived sensed landmark plotting values
+        zpos = quad.Getzpos()  # Perceived sensed landmark plotting values
         UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(eif.cov.item((0, 0)))], [-2 * np.sqrt(eif.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(eif.cov.item((1, 1)))], [-2 * np.sqrt(eif.cov.item((1, 1)))]])))
@@ -108,8 +106,8 @@ if __name__ == "__main__":
     # Plot position x truth and estimate
     plt.figure(2)
     plt.subplot(311)
-    plt.plot(quad.t, xe, 'c-', label='Position X Estimate')
-    plt.plot(quad.t, xt, 'b-', label='Position X Truth')
+    plt.plot(quad.t, xe.reshape(1, len(xe)), 'c-', label='Position X Estimate')
+    plt.plot(quad.t, xt.reshape(1, len(xt)), 'b-', label='Position X Truth')
     plt.ylabel('x (m)')
     plt.title('Position Truth and Estimate')
     plt.legend()
@@ -117,16 +115,16 @@ if __name__ == "__main__":
 
     # Plot position y truth and estimate
     plt.subplot(312)
-    plt.plot(quad.t, ye, 'c-', label='Position Y Estimate')
-    plt.plot(quad.t, yt, 'b-', label='Position Y Truth')
+    plt.plot(quad.t, ye.reshape(1, len(ye)), 'c-', label='Position Y Estimate')
+    plt.plot(quad.t, yt.reshape(1, len(yt)), 'b-', label='Position Y Truth')
     plt.ylabel('y (m)')
     plt.legend()
     plt.grid(True)
 
     # Plot position theta truth and estimate
     plt.subplot(313)
-    plt.plot(quad.t, thetae, 'c-', label='Position Theta Estimate')
-    plt.plot(quad.t, thetat, 'b-', label='Position Theta Truth')
+    plt.plot(quad.t, thetae.reshape(1, len(thetae)), 'c-', label='Position Theta Estimate')
+    plt.plot(quad.t, thetat.reshape(1, len(thetat)), 'b-', label='Position Theta Truth')
     plt.ylabel('theta (rad)')
     plt.xlabel('t (s)')
     plt.legend()
@@ -135,9 +133,9 @@ if __name__ == "__main__":
     # Plot position x error and covariance of states
     plt.figure(3)
     plt.subplot(311)
-    plt.plot(quad.t, xerr, 'm-', label='Position X Error')
-    plt.plot(quad.t, xc_upper, 'b--', label='Position X Covariance Bounds')
-    plt.plot(quad.t, xc_lower, 'b--')
+    plt.plot(quad.t, xerr.reshape(1, len(xerr)), 'm-', label='Position X Error')
+    plt.plot(quad.t, xc_upper.reshape(1, len(xc_upper)), 'b--', label='Position X Covariance Bounds')
+    plt.plot(quad.t, xc_lower.reshape(1, len(xc_lower)), 'b--')
     plt.ylabel('x (m)')
     plt.title('Position Estimation Error and Covariance Behavior')
     plt.legend()
@@ -145,34 +143,21 @@ if __name__ == "__main__":
 
     # Plot position y error and covariance of states
     plt.subplot(312)
-    plt.plot(quad.t, yerr, 'm-', label='Position Y Error')
-    plt.plot(quad.t, yc_upper, 'b--', label='Position Y Covariance Bounds')
-    plt.plot(quad.t, yc_lower, 'b--')
+    plt.plot(quad.t, yerr.reshape(1, len(yerr)), 'm-', label='Position Y Error')
+    plt.plot(quad.t, yc_upper.reshape(1, len(yc_upper)), 'b--', label='Position Y Covariance Bounds')
+    plt.plot(quad.t, yc_lower.reshape(1, len(yc_lower)), 'b--')
     plt.ylabel('y (m)')
     plt.legend()
     plt.grid(True)
 
     # Plot position theta error and covariance of states
     plt.subplot(313)
-    plt.plot(quad.t, thetaerr, 'm-', label='Position Theta Error')
-    plt.plot(quad.t, thetac_upper, 'b--', label='Position Theta Covariance Bounds')
-    plt.plot(quad.t, thetac_lower, 'b--')
+    plt.plot(quad.t, thetaerr.reshape(1, len(thetaerr)), 'm-', label='Position Theta Error')
+    plt.plot(quad.t, thetac_upper.reshape(1, len(thetac_upper)), 'b--', label='Position Theta Covariance Bounds')
+    plt.plot(quad.t, thetac_lower.reshape(1, len(thetac_lower)), 'b--')
     plt.ylabel('theta (rad)')
     plt.xlabel('t (s)')
     plt.legend()
     plt.grid(True)
 
-    # Plot kalman gain propogation
-    plt.figure(4)
-    plt.plot(quad.t, K[0, :], label='Kalman Gain 1')
-    plt.plot(quad.t, K[1, :], label='Kalman Gain 2')
-    plt.plot(quad.t, K[2, :], label='Kalman Gain 3')
-    plt.plot(quad.t, K[3, :], label='Kalman Gain 4')
-    plt.plot(quad.t, K[4, :], label='Kalman Gain 5')
-    plt.plot(quad.t, K[5, :], label='Kalman Gain 6')
-    plt.ylabel('K')
-    plt.xlabel('t (s)')
-    plt.title('Kalman Gain Behavior')
-    plt.legend()
-    plt.grid(True)
     plt.show()

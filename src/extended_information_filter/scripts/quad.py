@@ -40,6 +40,8 @@ class Quad:
         # Uncertainty characteristics of motion
         self.sig_r = 0.2
         self.sig_phi = 0.1
+        self.sig_v = 0.15
+        self.sig_w = 0.1
 
         # Load Truth Data
         data = loadmat('midterm_data.mat')
@@ -53,7 +55,7 @@ class Quad:
         self.v_c = data['v_c']
         self.w_c = data['om_c']
 
-        self.u = np.hstack((self.v_c, self.w_c))
+        self.u = np.vstack((self.v_c, self.w_c))
         self.z = np.vstack((self.range_tr[0, :].reshape(1, len(self.range_tr[0, :])), self.bearing_tr[0, :].reshape(1, len(self.bearing_tr[0, :]))))
         for i in range(len(self.range_tr)-1):
             self.z = np.vstack((self.z, self.range_tr[i+1, :].reshape(1, len(self.range_tr[i+1, :])), self.bearing_tr[i+1, :].reshape(1, len(self.bearing_tr[i+1, :]))))
@@ -82,5 +84,18 @@ class Quad:
         for i in range(self.nl):
             xz[:, i] = (np.array([x + np.cos(theta+z[2*i + 1])*z[2*i], y + np.sin(theta+z[2*i+1])*z[2*i]])).transpose()
         return xz
+
+    def g(self, u, mu):
+        x = mu[0] + (u[0] * np.cos(mu[2])) * self.dt
+        y = mu[1] + (u[0] * np.sin(mu[2])) * self.dt
+        theta = mu[2] + u[1] * self.dt
+        return np.array((x, y, theta)).reshape(len(mu), 1)
+
+    def h(self, mu, c):
+        xdiff = c[0]-mu[0]
+        ydiff = c[1]-mu[1]
+        r = np.sqrt((xdiff)**2 + (ydiff)**2)
+        phi = np.arctan2(ydiff, xdiff) - mu[2]
+        return np.array((r, phi)).reshape(2, 1)
 
 
