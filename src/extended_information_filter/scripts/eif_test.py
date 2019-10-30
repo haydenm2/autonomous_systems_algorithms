@@ -67,7 +67,7 @@ if __name__ == "__main__":
     eif = EIF(quad.c, quad.nl, quad.g, quad.h)
 
     body_radius = 0.3
-    # fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(quad, body_radius)
+    fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(quad, body_radius)
     mu = eif.mu
     two_sig_x = np.array([[2 * np.sqrt(eif.cov.item((0, 0)))], [-2 * np.sqrt(eif.cov.item((0, 0)))]])
     two_sig_y = np.array([[2 * np.sqrt(eif.cov.item((1, 1)))], [-2 * np.sqrt(eif.cov.item((1, 1)))]])
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         # plotter updates
         mu = np.hstack((mu, eif.mu))
         zpos = quad.Getzpos()  # Perceived sensed landmark plotting values
-        # UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
+        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(eif.cov.item((0, 0)))], [-2 * np.sqrt(eif.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(eif.cov.item((1, 1)))], [-2 * np.sqrt(eif.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(eif.cov.item((2, 2)))], [-2 * np.sqrt(eif.cov.item((2, 2)))]])))

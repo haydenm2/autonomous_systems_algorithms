@@ -37,6 +37,7 @@ class EIF:
         self.nl = n
         self.c = c
 
+        # dynamics and sensor model functions
         self.g = g
         self.h = h
 
@@ -60,16 +61,26 @@ class EIF:
             dx = (self.c[j, 0] - self.mu_bar[0])[0]
             dy = (self.c[j, 1] - self.mu_bar[1])[0]
             q = np.power(dx, 2) + np.power(dy, 2)
-            zhat = np.array([[np.sqrt(q)], [np.arctan2(dy, dx) - self.mu_bar[2]]])
+            zhat = np.array([[np.sqrt(q)], [self.Wrap(np.arctan2(dy, dx) - self.mu_bar[2, 0])]])
             H = np.array([[-dx/np.sqrt(q), -dy/np.sqrt(q), 0], [dy/q, -dx/q, -1]])
             self.inf_mat = self.inf_mat_bar + H.transpose() @ np.linalg.inv(self.Q) @ H
-            self.inf_vec = self.inf_vec_bar + H.transpose() @ np.linalg.inv(self.Q) @ (zt - self.h(self.mu_bar, self.c[j, :]) + H @ self.mu_bar)
+            ztdiff = zt - self.h(self.mu_bar, self.c[j, :])
+            ztdiff[1] = self.Wrap(ztdiff[1])
+            # ztdiff = (zt - self.h(self.mu_bar, self.c[j, :]) + H @ self.mu_bar)
+            # ztdiff[1] = self.Wrap(ztdiff[1])
+            self.inf_vec = self.inf_vec_bar + H.transpose() @ np.linalg.inv(self.Q) @ (ztdiff + H @ self.mu_bar)
+            # self.inf_vec = self.inf_vec_bar + H.transpose() @ np.linalg.inv(self.Q) @ ztdiff
         self.mu = np.linalg.inv(self.inf_mat) @ self.inf_vec
         self.cov = np.linalg.inv(self.inf_mat)
 
     def Wrap(self, th):
-        th_wrap = np.fmod(th + np.pi, 2*np.pi)
-        for i in range(len(th_wrap)):
-            if th_wrap[i] < 0:
-                th_wrap[i] += 2*np.pi
+        if type(th) is np.ndarray:
+            th_wrap = np.fmod(th + np.pi, 2*np.pi)
+            for i in range(len(th_wrap)):
+                if th_wrap[i] < 0:
+                    th_wrap[i] += 2*np.pi
+        else:
+            th_wrap = np.fmod(th + np.pi, 2 * np.pi)
+            if th_wrap < 0:
+                th_wrap += 2 * np.pi
         return th_wrap - np.pi
