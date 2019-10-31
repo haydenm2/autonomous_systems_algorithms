@@ -25,16 +25,17 @@ from matplotlib.patches import Circle
 
 def InitPlot(quad, body_radius):
     fig, ax = plt.subplots()
-    lines, = ax.plot([], [], 'g-', zorder=1)
-    lines_est, = ax.plot([], [], 'r--', zorder=2)
+    lines, = ax.plot([], [], 'g-', zorder=1, label='Position Estimate')
+    lines_est, = ax.plot([], [], 'r--', zorder=2, label='Position Estimate')
     robot_body = Circle((0, 0), body_radius, color='b', zorder=3)
     ax.add_artist(robot_body)
     robot_head, = ax.plot([], [], 'c-', zorder=4)
-    msensor, = ax.plot([], [], 'ro', zorder=5)
-    for i in range(quad.nl):
-        ax.plot(quad.c[i, 0], quad.c[i, 1], 'o', zorder=6)
+    msensor, = ax.plot([], [], 'ro', zorder=5, label='Landmark Sensor Estimates')
+    ax.plot(quad.c[:, 0], quad.c[:, 1], 'mo', zorder=6, label='Landmark Positions')
     ax.set_xlim([-15, 15])
     ax.set_ylim([-15, 15])
+    plt.title('Map with Position Truth and Estimate')
+    ax.legend()
     ax.grid()
     return fig, lines, lines_est, msensor, robot_body, robot_head
 
@@ -72,6 +73,7 @@ if __name__ == "__main__":
     body_radius = 0.3
     fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(quad, body_radius)
     mu = eif.mu
+    inf_vec = eif.inf_vec
     two_sig_x = np.array([[2 * np.sqrt(eif.cov.item((0, 0)))], [-2 * np.sqrt(eif.cov.item((0, 0)))]])
     two_sig_y = np.array([[2 * np.sqrt(eif.cov.item((1, 1)))], [-2 * np.sqrt(eif.cov.item((1, 1)))]])
     two_sig_theta = np.array([[2 * np.sqrt(eif.cov.item((2, 2)))], [-2 * np.sqrt(eif.cov.item((2, 2)))]])
@@ -82,6 +84,7 @@ if __name__ == "__main__":
 
         # plotter updates
         mu = np.hstack((mu, eif.mu))
+        inf_vec = np.hstack((inf_vec, eif.inf_vec))
         zpos = quad.Getzpos()  # Perceived sensed landmark plotting values
         if live_plot:
             UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
@@ -164,6 +167,16 @@ if __name__ == "__main__":
     plt.plot(quad.t[0], thetac_lower, 'b--')
     plt.ylabel('theta (rad)')
     plt.xlabel('t (s)')
+    plt.legend()
+    plt.grid(True)
+
+    # Plot information vector values
+    plt.figure(4)
+    plt.plot(quad.t[0], inf_vec[0], 'c-', label='Information Vector Element 1')
+    plt.plot(quad.t[0], inf_vec[1], 'b-', label='Information Vector Element 2')
+    plt.plot(quad.t[0], inf_vec[2], 'r-', label='Information Vector Element 3')
+    plt.xlabel('t (s)')
+    plt.title('Information Vector Values')
     plt.legend()
     plt.grid(True)
 
