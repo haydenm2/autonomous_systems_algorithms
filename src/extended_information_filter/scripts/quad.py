@@ -92,10 +92,20 @@ class Quad:
         return np.array((x, y, theta)).reshape(len(mu), 1)
 
     def h(self, mu, c):
-        xdiff = c[0]-mu[0]
-        ydiff = c[1]-mu[1]
-        r = np.sqrt((xdiff)**2 + (ydiff)**2)
-        phi = np.arctan2(ydiff, xdiff) - mu[2]
-        return np.array((r, phi)).reshape(2, 1)
+        dx = c[0]-mu[0]
+        dy = c[1]-mu[1]
+        r = np.sqrt(dx**2 + dy**2)
+        phi = np.arctan2(dy, dx) - mu[2]
+        return np.array((r, self.Wrap(phi))).reshape(2, 1)
 
-
+    def Wrap(self, th):
+        if type(th) is np.ndarray:
+            th_wrap = np.fmod(th + np.pi, 2*np.pi)
+            for i in range(len(th_wrap)):
+                if th_wrap[i] < 0:
+                    th_wrap[i] += 2*np.pi
+        else:
+            th_wrap = np.fmod(th + np.pi, 2 * np.pi)
+            if th_wrap < 0:
+                th_wrap += 2 * np.pi
+        return th_wrap - np.pi

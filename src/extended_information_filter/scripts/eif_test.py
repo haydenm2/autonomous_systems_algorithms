@@ -60,6 +60,9 @@ def UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_he
 
 if __name__ == "__main__":
 
+    # Live Plotting Flag
+    live_plot = True
+
     # Quadrotor Robot Init
     quad = Quad()       # Quadrotor model object
 
@@ -80,10 +83,14 @@ if __name__ == "__main__":
         # plotter updates
         mu = np.hstack((mu, eif.mu))
         zpos = quad.Getzpos()  # Perceived sensed landmark plotting values
-        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
+        if live_plot:
+            UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(eif.cov.item((0, 0)))], [-2 * np.sqrt(eif.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(eif.cov.item((1, 1)))], [-2 * np.sqrt(eif.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(eif.cov.item((2, 2)))], [-2 * np.sqrt(eif.cov.item((2, 2)))]])))
+
+    if ~live_plot:
+        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, quad, mu, zpos)
 
     # Plotting Vectors
     xe = mu[0, :]  # position x estimation
