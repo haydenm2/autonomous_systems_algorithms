@@ -25,7 +25,7 @@ from scipy.io import loadmat
 
 
 class TWR:
-    def __init__(self, t_end=40, dt=0.1, n=50):
+    def __init__(self, t_end=60, dt=0.1, n=15):
 
         # Time parameters
         self.t_end = t_end        # completion time
@@ -39,30 +39,33 @@ class TWR:
         self.a_4 = 0.1
 
         # Sensor Parameters
-        self.fov = 360 * np.pi/180
+        self.fov = 180 * np.pi/180
         self.sig_r = 0.1
         self.sig_phi = 0.05
 
         # Landmark Locations
         self.nl = n
         self.c = np.zeros([self.nl, 2])
-        self.c[0] = np.array([6, 4])
-        self.c[1] = np.array([-7, 8])
-        self.c[2] = np.array([6, -4])
+        # self.c[0] = np.array([6, 4])
+        # self.c[1] = np.array([-7, 8])
+        # self.c[2] = np.array([6, -4])
 
         # Random Landmark Generator
         for k in range(self.nl):
-            self.c[k] = np.array([np.random.randint(-10, 10), np.random.randint(-10, 10)])
+            self.c[k] = np.array([(np.random.rand()*2-1)*10, (np.random.rand()*2-1)*10])
 
         # Plot data containers
-        self.x = np.zeros([3, 1])  # state truth vector
-        self.x = np.array([[-5], [-3], [90*(np.pi/180)]])   # initial states
-        self.z = np.zeros([2, self.nl])  # measurement vector
+        self.x0 = np.array([[-5], [-3], [90*(np.pi/180)]])
+        self.x = self.x0
+        self.z = np.zeros([2, self.nl])
         for i in range(self.nl):
-            self.z[0, i] = np.sqrt(np.power(self.c[i, 0] - self.x[0], 2) + np.power(self.c[i, 1] - self.x[1], 2)) + self.sig_r*np.random.randn()
-            self.z[1, i] = self.Wrap(np.arctan2(self.c[i, 1] - self.x[1], self.c[i, 0] - self.x[0]) - self.x[2] + self.sig_phi*np.random.randn())
+            self.z[0, i] = np.sqrt(np.power(self.c[i, 0] - self.x[0], 2) + np.power(self.c[i, 1] - self.x[1], 2))
+            self.z[1, i] = self.Wrap(np.arctan2(self.c[i, 1] - self.x[1], self.c[i, 0] - self.x[0]) - self.x[2])
             if np.abs(self.z[1, i]) > self.fov/2:
                 self.z[:, i] *= np.nan
+            else:
+                self.z[0, i] += + self.sig_r * np.random.randn()
+                self.z[1, i] = self.Wrap(self.z[1, i] + self.sig_phi * np.random.randn())
         self.u = np.zeros([2, 1])  # input command vector
         self.t = np.zeros(1)       # time vector
 

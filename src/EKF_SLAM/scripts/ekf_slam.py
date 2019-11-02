@@ -20,28 +20,28 @@ import control as ct
 
 
 class EKF_SLAM:
-    def __init__(self, c, n, g, h, dt=0.1, x0=np.array([[-5], [-3], [90*np.pi/180.0]])):
+    def __init__(self, twr):
         # Landmark Locations
-        self.nl = n
-        self.c = c
+        self.nl = twr.nl
+        self.c = twr.c
 
-        self.mu = np.vstack((x0, np.zeros([2*self.nl, 1])))       # state mean vector
+        self.mu = np.vstack((twr.x0, np.zeros([2*self.nl, 1])))       # state mean vector
         self.mu_bar = np.copy(self.mu)                            # state mean prediction vector
-        self.cov = np.eye(3 + 2*self.nl)                           # state covariance
-        self.cov_bar = np.eye(3 + 2*self.nl)                             # state covariance prediction
+        self.cov = np.eye(3 + 2*self.nl)*3                          # state covariance
+        self.cov_bar = np.eye(3 + 2*self.nl)*3                          # state covariance prediction
         self.G = np.eye(3 + 2*self.nl)
         self.V = np.zeros([3, 2])
         self.K = np.zeros([2*(3 + 2*self.nl), 1])
         self.M = np.zeros([2, 2])
         self.R = np.zeros([3, 3])
         self.Q = np.zeros([2, 2])
-        self.a_1 = 0.1
-        self.a_2 = 0.01
-        self.a_3 = 0.01
-        self.a_4 = 0.1
-        self.sig_r = 0.1
-        self.sig_phi = 0.05
-        self.dt = dt
+        self.a_1 = twr.a_1
+        self.a_2 = twr.a_2
+        self.a_3 = twr.a_3
+        self.a_4 = twr.a_4
+        self.sig_r = twr.sig_r
+        self.sig_phi = twr.sig_phi
+        self.dt = twr.dt
         self.landmark_seen = np.zeros((1, self.nl))
 
         self.Fx = np.hstack((np.eye(3), np.zeros([3, 2*self.nl])))
@@ -99,10 +99,10 @@ class EKF_SLAM:
             dy = (self.mu_bar[3 + 2 * j + 1] - self.mu_bar[1])[0]
             delta = np.array([[dx], [dy]])
             q = (delta.transpose() @ delta)[0, 0]
-            zhat = np.array([[np.sqrt(q)], [np.arctan2(dy, dx) - self.mu_bar[2, 0]]])
+            zhat = np.array([[np.sqrt(q)], [self.Wrap(np.arctan2(dy, dx) - self.mu_bar[2, 0])]])
             H_base = np.array([[-np.sqrt(q)*dx, -np.sqrt(q)*dy, 0, np.sqrt(q)*dx, np.sqrt(q)*dy], [dy, -dx, -q, -dy, dx]])
             H = 1/q * np.hstack((H_base[:, 0:3], np.zeros((2, 2*j)), H_base[:, 3:5], np.zeros((2, 2*self.nl - 2*j - 2))))
-            K = self.cov_bar @ (H.transpose() @ np.linalg.inv(H @ self.cov_bar @ H.transpose() + self.Q))
+            K = self.cov_bar @ H.transpose() @ np.linalg.inv(H @ self.cov_bar @ H.transpose() + self.Q)
             zdiff = zj - zhat
             zdiff[1] = self.Wrap(zdiff[1])
             self.mu_bar = self.mu_bar + K @ zdiff

@@ -3,7 +3,7 @@ from ekf_slam import EKF_SLAM
 from twr import TWR
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Wedge
 
 # ------------------------------------------------------------------
 # Summary:
@@ -30,9 +30,11 @@ def InitPlot(twr, body_radius):
     robot_body = Circle((0, 0), body_radius, color='b', zorder=3, label='Robot Truth')
     ax.add_artist(robot_body)
     robot_head, = ax.plot([], [], 'c-', zorder=4)
+    scan_angle = Wedge((twr.x_new[0, 0], twr.x_new[1, 0]), 30, (twr.x_new[2, 0]-twr.fov/2)*180/np.pi, (twr.x_new[2, 0]+twr.fov/2)*180/np.pi, color='c', zorder=7, alpha=0.1)
+    ax.add_artist(scan_angle)
     mlandmarks = []
     for i in range(twr.nl):
-        han = Circle((0, 0), 1, color='r', zorder=6, alpha=0.3)
+        han = Circle((150, 150), 1, color='r', zorder=6, alpha=0.3)
         ax.add_artist(han)
         mlandmarks.append(han)
     ax.add_artist(robot_body)
@@ -42,10 +44,10 @@ def InitPlot(twr, body_radius):
     plt.title('Map with Robot and Landmark Truth and Estimate')
     ax.legend()
     ax.grid()
-    return fig, lines, lines_est, mlandmarks, robot_body, robot_head
+    return fig, lines, lines_est, mlandmarks, robot_body, robot_head, scan_angle
 
 
-def UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, twr, mu, mu_landmarks, rad_landmarks):
+def UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks, rad_landmarks):
     xt = twr.x[0:2, :]  # position truth
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
@@ -57,6 +59,8 @@ def UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot
         mu_landmarks_x = np.hstack((mu_landmarks_x, mu_landmarks[2*i]))
         mu_landmarks_y = np.hstack((mu_landmarks_y, mu_landmarks[2*i+1]))
     for j in range(twr.nl):
+        if mu_landmarks_x[j] == 0 and mu_landmarks_y[j] == 0:
+            continue
         mlandmarks[j].center = (mu_landmarks_x[j], mu_landmarks_y[j])
         mlandmarks[j].radius = rad_landmarks[j]
 
@@ -66,22 +70,26 @@ def UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot
     robot_head.set_xdata(headx)
     robot_head.set_ydata(heady)
 
+    scan_angle.set_center((twr.x_new[0, 0], twr.x_new[1, 0]))
+    scan_angle.set_theta1((twr.x_new[2, 0] - twr.fov / 2)*180/np.pi)
+    scan_angle.set_theta2((twr.x_new[2, 0] + twr.fov / 2)*180/np.pi)
+
     fig.canvas.draw()
     plt.pause(0.01)
 
 
 if __name__ == "__main__":
 
-    plot_live = False
+    plot_live = True
 
     # Two-Wheeled Robot Init
     twr = TWR()       # TWR model object
 
     # EKF SLAM filter Init
-    ekf_slam = EKF_SLAM(twr.c, twr.nl, twr.g, twr.h)
+    ekf_slam = EKF_SLAM(twr)
 
     body_radius = 0.3
-    fig, lines, lines_est, mlandmarks, robot_body, robot_head = InitPlot(twr, body_radius)
+    fig, lines, lines_est, mlandmarks, robot_body, robot_head, scan_angle = InitPlot(twr, body_radius)
     mu = ekf_slam.mu[0:3].reshape([3, 1])
     mu_landmarks = ekf_slam.mu[3:].reshape([len(ekf_slam.mu[3:]), 1])
     K = ekf_slam.K
@@ -99,12 +107,12 @@ if __name__ == "__main__":
         K = np.hstack((K, ekf_slam.K))
         rad_landmarks = 2*np.sqrt((ekf_slam.cov).diagonal()[3:])
         if plot_live:
-            UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, twr, mu, mu_landmarks[:, -1], rad_landmarks)
+            UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], rad_landmarks)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ekf_slam.cov.item((0, 0)))], [-2 * np.sqrt(ekf_slam.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ekf_slam.cov.item((1, 1)))], [-2 * np.sqrt(ekf_slam.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(ekf_slam.cov.item((2, 2)))], [-2 * np.sqrt(ekf_slam.cov.item((2, 2)))]])))
     if ~plot_live:
-        UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, twr, mu, mu_landmarks[:, -1], rad_landmarks)
+        UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], rad_landmarks)
 
     # Plotting Vectors
     xe = mu[0, :]  # position x estimation
@@ -189,4 +197,9 @@ if __name__ == "__main__":
     plt.xlabel('t (s)')
     plt.title('Kalman Gain Behavior')
     plt.grid(True)
+
+    # Covariance matrix
+    plt.figure(5)
+    plt.imshow(ekf_slam.cov, "Greys")
+    plt.title('EKF SLAM Covariance Matrix')
     plt.show()
