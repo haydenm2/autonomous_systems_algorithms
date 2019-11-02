@@ -52,7 +52,7 @@ class TWR:
         self.z = np.zeros([2, self.nl])  # measurement vector
         for i in range(self.nl):
             self.z[0, i] = np.sqrt(np.power(self.c[i, 0] - self.x[0], 2) + np.power(self.c[i, 1] - self.x[1], 2)) + self.sig_r*np.random.randn()
-            self.z[0, i] = np.arctan2(self.c[i, 1] - self.x[1], self.c[i, 0] - self.x[0]) - self.x[2] + self.sig_phi*np.random.randn()
+            self.z[1, i] = np.arctan2(self.c[i, 1] - self.x[1], self.c[i, 0] - self.x[0]) - self.x[2] + self.sig_phi*np.random.randn()
         self.u = np.zeros([2, 1])  # input command vector
         self.t = np.zeros(1)       # time vector
 

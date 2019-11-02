@@ -27,7 +27,7 @@ class EKF_SLAM:
 
         self.mu = np.vstack((x0, np.zeros([2*self.nl, 1])))       # state mean vector
         self.mu_bar = np.copy(self.mu)                            # state mean prediction vector
-        self.cov = np.eye(3 + 2*self.nl) * 0.1                           # state covariance
+        self.cov = np.eye(3 + 2*self.nl)                           # state covariance
         self.cov_bar = np.eye(3 + 2*self.nl)                             # state covariance prediction
         self.G = np.eye(3 + 2*self.nl)
         self.V = np.zeros([3, 2])
@@ -52,7 +52,11 @@ class EKF_SLAM:
 
     def Propogate(self, u, z):
         self.PredictState(u)
-        self.AddMeasurement(z)
+        if not(np.count_nonzero(np.isnan(z)) == len(z)):
+            self.AddMeasurement(z)
+        else:
+            self.mu = self.mu_bar
+            self.cov = self.cov_bar
 
     def PredictState(self, u):
         theta = (self.mu[2])[0]
@@ -85,6 +89,8 @@ class EKF_SLAM:
             zj = z[(2*j):(2*j + 2)]
             zr = zj[0]
             zphi = zj[1]
+            if np.isnan(zr) or np.isnan(zphi):
+                continue
             if not(self.landmark_seen[0, j]):
                 self.mu_bar[3 + 2*j] = self.mu_bar[0] + zr*np.cos(zphi + self.mu_bar[2])
                 self.mu_bar[3 + 2*j + 1] = self.mu_bar[1] + zr*np.sin(zphi + self.mu_bar[2])
