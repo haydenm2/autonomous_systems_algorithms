@@ -46,6 +46,10 @@ class TWR:
         self.c[1] = np.array([-7, 8])
         self.c[2] = np.array([6, -4])
 
+        # # Random Landmark Generator
+        # for k in range(self.nl):
+        #     self.c[k] = np.array([np.random.randint(-10, 10), np.random.randint(-10, 10)])
+
         # Plot data containers
         self.x = np.zeros([3, 1])  # state truth vector
         self.x = np.array([[-5], [-3], [90*(np.pi/180)]])   # initial states
@@ -108,4 +112,27 @@ class TWR:
             xz[:, i] = (np.array([np.cos(theta+z[1, i])*z[0, i]+x, np.sin(theta+z[1, i])*z[0, i]+y])).transpose()
         return xz
 
+    def g(self, u, mu):
+        x = mu[0] + (-(u[0] / u[1]) * np.sin(mu[2]) + (u[0] / u[1]) * np.sin(mu[2] + u[1] * self.dt))
+        y = mu[1] + (u[0] / u[1]) * np.cos(mu[2]) - (u[0] / u[1]) * np.cos(mu[2] + u[1] * self.dt)
+        theta = mu[2] + u[1] * self.dt
+        return np.array((x, y, theta)).reshape(len(mu), 1)
 
+    def h(self, mu, c):
+        dx = c[0]-mu[0]
+        dy = c[1]-mu[1]
+        r = np.sqrt(dx**2 + dy**2)
+        phi = np.arctan2(dy, dx) - mu[2]
+        return np.array((r, self.Wrap(phi))).reshape(2, 1)
+
+    def Wrap(self, th):
+        if type(th) is np.ndarray:
+            th_wrap = np.fmod(th + np.pi, 2*np.pi)
+            for i in range(len(th_wrap)):
+                if th_wrap[i] < 0:
+                    th_wrap[i] += 2*np.pi
+        else:
+            th_wrap = np.fmod(th + np.pi, 2 * np.pi)
+            if th_wrap < 0:
+                th_wrap += 2 * np.pi
+        return th_wrap - np.pi
