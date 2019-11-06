@@ -27,8 +27,8 @@ class EKF_SLAM:
 
         self.mu = np.vstack((twr.x0, np.zeros([2*self.nl, 1])))       # state mean vector
         self.mu_bar = np.copy(self.mu)                            # state mean prediction vector
-        self.cov = np.eye(3 + 2*self.nl)*3                          # state covariance
-        self.cov_bar = np.eye(3 + 2*self.nl)*3                          # state covariance prediction
+        self.cov = np.eye(3 + 2*self.nl)*1                          # state covariance
+        self.cov_bar = np.eye(3 + 2*self.nl)*1                          # state covariance prediction
         self.G = np.eye(3 + 2*self.nl)
         self.V = np.zeros([3, 2])
         self.K = np.zeros([2*(3 + 2*self.nl), 1])

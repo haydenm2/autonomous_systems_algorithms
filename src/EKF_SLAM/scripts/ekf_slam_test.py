@@ -3,7 +3,7 @@ from ekf_slam import EKF_SLAM
 from twr import TWR
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, Wedge
+from matplotlib.patches import Circle, Wedge, Ellipse
 
 # ------------------------------------------------------------------
 # Summary:
@@ -34,7 +34,7 @@ def InitPlot(twr, body_radius):
     ax.add_artist(scan_angle)
     mlandmarks = []
     for i in range(twr.nl):
-        han = Circle((150, 150), 1, color='r', zorder=6, alpha=0.3)
+        han = Ellipse((150, 150), 1, 1, color='r', zorder=6, alpha=0.3)
         ax.add_artist(han)
         mlandmarks.append(han)
     ax.add_artist(robot_body)
@@ -47,7 +47,7 @@ def InitPlot(twr, body_radius):
     return fig, lines, lines_est, mlandmarks, robot_body, robot_head, scan_angle
 
 
-def UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks, rad_landmarks):
+def UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks, w_landmarks, h_landmarks, ang_landmarks):
     xt = twr.x[0:2, :]  # position truth
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
@@ -62,7 +62,9 @@ def UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot
         if mu_landmarks_x[j] == 0 and mu_landmarks_y[j] == 0:
             continue
         mlandmarks[j].center = (mu_landmarks_x[j], mu_landmarks_y[j])
-        mlandmarks[j].radius = rad_landmarks[j]
+        mlandmarks[j].width = w_landmarks[j]
+        mlandmarks[j].height = h_landmarks[j]
+        mlandmarks[j].angle = ang_landmarks[j]
 
     robot_body.center = ((twr.Getx())[0], (twr.Getx())[1])
     headx = np.array([twr.Getx()[0], twr.Getx()[0] + body_radius * np.cos(twr.Getx()[2])])
@@ -92,6 +94,9 @@ if __name__ == "__main__":
     fig, lines, lines_est, mlandmarks, robot_body, robot_head, scan_angle = InitPlot(twr, body_radius)
     mu = ekf_slam.mu[0:3].reshape([3, 1])
     mu_landmarks = ekf_slam.mu[3:].reshape([len(ekf_slam.mu[3:]), 1])
+    w_landmarks = np.zeros((twr.nl, 1))
+    h_landmarks = np.zeros((twr.nl, 1))
+    ang_landmarks = np.zeros((twr.nl, 1))
     K = ekf_slam.K
     two_sig_x = np.array([[2 * np.sqrt(ekf_slam.cov.item((0, 0)))], [-2 * np.sqrt(ekf_slam.cov.item((0, 0)))]])
     two_sig_y = np.array([[2 * np.sqrt(ekf_slam.cov.item((1, 1)))], [-2 * np.sqrt(ekf_slam.cov.item((1, 1)))]])
@@ -105,14 +110,21 @@ if __name__ == "__main__":
         mu = np.hstack((mu, ekf_slam.mu[0:3].reshape([3, 1])))
         mu_landmarks = np.hstack((mu_landmarks, ekf_slam.mu[3:].reshape([len(ekf_slam.mu[3:]), 1])))
         K = np.hstack((K, ekf_slam.K))
-        rad_landmarks = 2*np.sqrt((ekf_slam.cov).diagonal()[3:])
+        for i in range(twr.nl):
+            A = (ekf_slam.cov[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
+            w, v = np.linalg.eig(A)
+            w_landmarks[i] = 2*np.sqrt(5.991*w[0])
+            h_landmarks[i] = 2*np.sqrt(5.991*w[1])
+            ang_landmarks[i] = np.arctan2(v[0, 1], v[0, 0])*180/np.pi
+            pass
+
         if plot_live:
-            UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], rad_landmarks)
+            UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ekf_slam.cov.item((0, 0)))], [-2 * np.sqrt(ekf_slam.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ekf_slam.cov.item((1, 1)))], [-2 * np.sqrt(ekf_slam.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(ekf_slam.cov.item((2, 2)))], [-2 * np.sqrt(ekf_slam.cov.item((2, 2)))]])))
     if ~plot_live:
-        UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], rad_landmarks)
+        UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks)
 
     # Plotting Vectors
     xe = mu[0, :]  # position x estimation
