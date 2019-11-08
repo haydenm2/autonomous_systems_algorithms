@@ -33,10 +33,10 @@ class TWR:
         self.init = True
 
         # Noise characteristics of motion
-        self.a_1 = 0.1 /10
-        self.a_2 = 0.01 /10
-        self.a_3 = 0.01 /10
-        self.a_4 = 0.1 /10
+        self.a_1 = 0.1 /2
+        self.a_2 = 0.01 /2
+        self.a_3 = 0.01 /2
+        self.a_4 = 0.1 /2
 
         # Sensor Parameters
         self.fov = 45 * np.pi/180
