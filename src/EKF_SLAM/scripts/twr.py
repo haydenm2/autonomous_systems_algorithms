@@ -25,7 +25,7 @@ from scipy.io import loadmat
 
 
 class TWR:
-    def __init__(self, t_end=60, dt=0.1, n=15):
+    def __init__(self, t_end=60, dt=0.1, n=8):
 
         # Time parameters
         self.t_end = t_end        # completion time
@@ -33,22 +33,19 @@ class TWR:
         self.init = True
 
         # Noise characteristics of motion
-        self.a_1 = 0.1
-        self.a_2 = 0.01
-        self.a_3 = 0.01
-        self.a_4 = 0.1
+        self.a_1 = 0.1 /10
+        self.a_2 = 0.01 /10
+        self.a_3 = 0.01 /10
+        self.a_4 = 0.1 /10
 
         # Sensor Parameters
-        self.fov = 180 * np.pi/180
+        self.fov = 45 * np.pi/180
         self.sig_r = 0.1
         self.sig_phi = 0.05
 
         # Landmark Locations
         self.nl = n
         self.c = np.zeros([self.nl, 2])
-        # self.c[0] = np.array([6, 4])
-        # self.c[1] = np.array([-7, 8])
-        # self.c[2] = np.array([6, -4])
 
         # Random Landmark Generator
         for k in range(self.nl):
