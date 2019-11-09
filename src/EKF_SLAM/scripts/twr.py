@@ -25,7 +25,7 @@ from scipy.io import loadmat
 
 
 class TWR:
-    def __init__(self, t_end=60, dt=0.1, n=8):
+    def __init__(self, t_end=60, dt=0.1, n=15):
 
         # Time parameters
         self.t_end = t_end        # completion time
@@ -39,7 +39,7 @@ class TWR:
         self.a_4 = 0.1 /2
 
         # Sensor Parameters
-        self.fov = 45 * np.pi/180
+        self.fov = 120 * np.pi/180
         self.sig_r = 0.1
         self.sig_phi = 0.05
 
