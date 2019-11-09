@@ -2,12 +2,13 @@
 
 import numpy as np
 
-# Generic EKF SLAM Approach (From Probablistic Robotics)
+# Generic FAST SLAM Filter Approach (From Probablistic Robotics)
 
-class EKF_SLAM:
+class FAST_SLAM:
     def __init__(self, twr):
         # Landmark Locations
         self.nl = twr.nl
+        self.n = twr.n
 
         self.mu = np.vstack((twr.x0, np.zeros([2*self.nl, 1])))       # state mean vector
         self.mu_bar = np.copy(self.mu)                            # state mean prediction vector
@@ -25,6 +26,7 @@ class EKF_SLAM:
         self.M = np.zeros([2, 2])
         self.R = np.zeros([3, 3])
         self.Q = np.zeros([2, 2])
+
         self.a_1 = twr.a_1
         self.a_2 = twr.a_2
         self.a_3 = twr.a_3
@@ -39,14 +41,38 @@ class EKF_SLAM:
         self.Q[0, 0] = np.power(self.sig_r, 2)
         self.Q[1, 1] = np.power(self.sig_phi, 2)
 
+        self.g = twr.g
+        self.h = twr.h
+        self.h_inv = twr.h_inv
+
+        # Particle parameters
+        self.M = 1000
+        self.X = np.zeros([self.n + 2*self.nl, self.M])
+        for i in range(self.M):
+            self.X[0, i] = self.mu[0]  # (2 * np.random.rand() - 1) * 10
+            self.X[1, i] = self.mu[1]  # (2 * np.random.rand() - 1) * 10
+            self.X[2, i] = self.mu[2]  # (2 * np.random.rand() - 1) * np.pi
+        self.X_bar = np.empty([self.n + 2*self.nl, 0])
+        self.W_bar = np.empty([1, 0])
+        self.W = np.copy(self.W_bar)
+        self.EstimateMeanCov()
+
 
     def Propogate(self, u, z):
-        self.PredictState(u)
+        self.X_bar = np.empty([self.n, 0])
+        self.W_bar = np.empty([1, 0])
+
+        self.X_bar = self.PropogatePoints(u, self.X)
+
         if not(np.count_nonzero(np.isnan(z)) == len(z)):
-            self.AddMeasurement(z)
+            self.W_bar = self.AddMeasurement(z, self.X_bar)
+            self.W_bar = self.W_bar / np.sum(self.W_bar)
+            self.W = self.W_bar
+            self.Resample()
+            self.EstimateMeanCov()
         else:
-            self.mu = self.mu_bar
-            self.cov = self.cov_bar
+            self.EstimateMeanCov()
+
 
     def PredictState(self, u):
         theta = (self.mu[2])[0]
@@ -100,6 +126,35 @@ class EKF_SLAM:
         self.mu = self.mu_bar
         self.cov = self.cov_bar
         self.K = K.reshape((2*(3 + 2*self.nl), 1))
+
+    def Resample(self):
+        X_bar = np.empty([self.n, 0])
+        self.W_bar = np.empty([1, 0])
+        Minv = 1/self.M
+        r = np.random.uniform(low=0, high=Minv)
+        c = self.W[0, 0]
+        i = 0
+        for m in range(self.M):
+            U = r + m*Minv
+            while U > c:
+                i = i+1
+                c = c + self.W[0, i]
+            X_bar = np.hstack((X_bar, self.X_bar[:, i].reshape((3, 1))))
+        uniq = len(np.unique(X_bar))
+
+        # introduce synthetic noise if convergence is too fast
+        if uniq/self.M < 0.5:
+            Q = self.cov/((self.M*uniq)**(1/self.n))
+            X_bar = X_bar + Q @ np.random.randn(np.shape(X_bar)[0], np.shape(X_bar)[1])
+        self.X = X_bar
+
+
+    def EstimateMeanCov(self):
+        self.mu = np.mean(self.X, axis=1).reshape((self.n + 2*self.nl, 1))
+        E = (self.X - self.mu)
+        E[2, :] = self.Wrap(E[2, :])
+        self.cov = 1/(len(self.X[0]) - 1) * (E @ E.transpose())
+        pass
 
     def Wrap(self, th):
         if type(th) is np.ndarray:
