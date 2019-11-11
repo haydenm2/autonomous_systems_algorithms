@@ -39,7 +39,7 @@ class TWR:
         self.a_4 = 0.1 /2
 
         # Sensor Parameters
-        self.fov = 120 * np.pi/180
+        self.fov = 360 * np.pi/180
         self.sig_r = 0.1
         self.sig_phi = 0.05
 
@@ -142,6 +142,13 @@ class TWR:
         m[0] = mu[0] + z[0] * np.cos(z[1] + mu[2])
         m[1] = mu[1] + z[0] * np.sin(z[1] + mu[2])
         return m.reshape(2, 1)
+
+    def H(self, c, x):
+        dx = c[0] - x[0]
+        dy = c[1] - x[1]
+        q = np.power(dx, 2) + np.power(dy, 2)
+        H = np.array([[-dx / np.sqrt(q), -dy / np.sqrt(q)], [dy / q, -dx / q]])
+        return H
 
     def Wrap(self, th):
         if type(th) is np.ndarray:

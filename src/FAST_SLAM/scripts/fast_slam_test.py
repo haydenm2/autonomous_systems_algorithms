@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ekf_slam import EKF_SLAM
+from fast_slam import FAST_SLAM
 from twr import TWR
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,7 +7,7 @@ from matplotlib.patches import Circle, Wedge, Ellipse
 
 # ------------------------------------------------------------------
 # Summary:
-# Example of implementation of ekf_slam class on a simple Two-Wheeled Robot system defined by
+# Example of implementation of fast_slam class on a simple Two-Wheeled Robot system defined by
 # the motion model described in Chapter 5 of Probablistic Robotics
 #
 # Commanded as follows:
@@ -42,7 +42,7 @@ def InitPlot(twr, body_radius):
         # for line ellipses
         han, = ax.plot([], [], 'r-', zorder=6)
         mlandmarks.append(han)
-
+    mparticles, = ax.plot([], [], 'r.', zorder=7, markersize=3)
     ax.add_artist(robot_body)
     ax.plot(twr.c[:, 0], twr.c[:, 1], 'o', zorder=5, label='True Landmark Positions')
     ax.set_xlim([-15, 15])
@@ -50,15 +50,17 @@ def InitPlot(twr, body_radius):
     plt.title('Map with Robot and Landmark Truth and Estimate')
     ax.legend()
     ax.grid()
-    return fig, lines, lines_est, mlandmarks, robot_body, robot_head, scan_angle
+    return fig, lines, lines_est, mparticles, mlandmarks, robot_body, robot_head, scan_angle
 
 
-def UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks, w_landmarks, h_landmarks, ang_landmarks):
+def UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks, w_landmarks, h_landmarks, ang_landmarks, X):
     xt = twr.x[0:2, :]  # position truth
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
     lines_est.set_xdata(mu[0, :])
     lines_est.set_ydata(mu[1, :])
+    mparticles.set_xdata(X[0, :])
+    mparticles.set_ydata(X[1, :])
     mu_landmarks_x = []
     mu_landmarks_y = []
     for i in range(int(len(mu_landmarks)/2)):
@@ -95,59 +97,60 @@ if __name__ == "__main__":
     # Two-Wheeled Robot Init
     twr = TWR()       # TWR model object
 
-    # EKF SLAM filter Init
-    ekf_slam = EKF_SLAM(twr)
+    # FAST SLAM filter Init
+    fast_slam = FAST_SLAM(twr)
 
     body_radius = 0.3
-    fig, lines, lines_est, mlandmarks, robot_body, robot_head, scan_angle = InitPlot(twr, body_radius)
-    mu = ekf_slam.mu[0:3].reshape([3, 1])
-    mu_landmarks = ekf_slam.mu[3:].reshape([len(ekf_slam.mu[3:]), 1])
+    fig, lines, lines_est, mparticles, mlandmarks, robot_body, robot_head, scan_angle = InitPlot(twr, body_radius)
+    mu = fast_slam.mu[0:3].reshape([3, 1])
+    mu_landmarks = fast_slam.mu[3:].reshape([len(fast_slam.mu[3:]), 1])
     w_landmarks = np.zeros((twr.nl, 1))
     h_landmarks = np.zeros((twr.nl, 1))
     ang_landmarks = np.zeros((twr.nl, 1))
-    K = ekf_slam.K
-    two_sig_x = np.array([[2 * np.sqrt(ekf_slam.cov.item((0, 0)))], [-2 * np.sqrt(ekf_slam.cov.item((0, 0)))]])
-    two_sig_y = np.array([[2 * np.sqrt(ekf_slam.cov.item((1, 1)))], [-2 * np.sqrt(ekf_slam.cov.item((1, 1)))]])
-    two_sig_theta = np.array([[2 * np.sqrt(ekf_slam.cov.item((2, 2)))], [-2 * np.sqrt(ekf_slam.cov.item((2, 2)))]])
+    K = fast_slam.K
+    two_sig_x = np.array([[2 * np.sqrt(fast_slam.cov.item((0, 0)))], [-2 * np.sqrt(fast_slam.cov.item((0, 0)))]])
+    two_sig_y = np.array([[2 * np.sqrt(fast_slam.cov.item((1, 1)))], [-2 * np.sqrt(fast_slam.cov.item((1, 1)))]])
+    two_sig_theta = np.array([[2 * np.sqrt(fast_slam.cov.item((2, 2)))], [-2 * np.sqrt(fast_slam.cov.item((2, 2)))]])
     for i in range(int(twr.t_end/twr.dt)):
         # truth model updates
         twr.Propagate()
-        ekf_slam.Propogate(twr.Getu(), twr.Getz())
+        fast_slam.Propogate(twr.Getu(), twr.Getz())
 
         # plotter updates
-        mu = np.hstack((mu, ekf_slam.mu[0:3].reshape([3, 1])))
-        mu_landmarks = np.hstack((mu_landmarks, ekf_slam.mu[3:].reshape([len(ekf_slam.mu[3:]), 1])))
-        K = np.hstack((K, ekf_slam.K))
+        mu = np.hstack((mu, fast_slam.mu[0:3].reshape([3, 1])))
+        mu_landmarks = np.hstack((mu_landmarks, fast_slam.mu[3:].reshape([len(fast_slam.mu[3:]), 1])))
+        X = fast_slam.X
+        K = np.hstack((K, fast_slam.K))
         for i in range(twr.nl):
 
             # # for patch ellipses
-            # A = (ekf_slam.cov[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
+            # A = (fast_slam.cov[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
             # w, v = np.linalg.eig(A)
             # w_landmarks[i] = 2*np.sqrt(5.991*w[0])
             # h_landmarks[i] = 2*np.sqrt(5.991*w[1])
             # ang_landmarks[i] = np.arctan2(v[1, np.argmax(w)], v[0, np.argmax(w)])*180/np.pi
 
             # for line ellipses
-            if ~(ekf_slam.mu[3 + 2*i] == 0 and ekf_slam.mu[3 + 2*i + 1] == 0):
-                A = (ekf_slam.cov[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
+            if ~(fast_slam.mu[3 + 2*i] == 0 and fast_slam.mu[3 + 2*i + 1] == 0):
+                A = (fast_slam.cov[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
                 [U, S, _] = np.linalg.svd(A)
                 C = U * 2*np.sqrt(S)
                 theta = np.linspace(0, 2*np.pi, 100)
                 circle = np.array([np.cos(theta), np.sin(theta)])
                 ellipse = C @ circle
-                ellipse[0, :] += ekf_slam.mu[3 + 2*i]
-                ellipse[1, :] += ekf_slam.mu[3 + 2*i + 1]     
+                ellipse[0, :] += fast_slam.mu[3 + 2*i]
+                ellipse[1, :] += fast_slam.mu[3 + 2*i + 1]
 
                 mlandmarks[i].set_xdata(ellipse[0, :])
                 mlandmarks[i].set_ydata(ellipse[1, :])
 
         if plot_live:
-            UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks)
-        two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ekf_slam.cov.item((0, 0)))], [-2 * np.sqrt(ekf_slam.cov.item((0, 0)))]])))
-        two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ekf_slam.cov.item((1, 1)))], [-2 * np.sqrt(ekf_slam.cov.item((1, 1)))]])))
-        two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(ekf_slam.cov.item((2, 2)))], [-2 * np.sqrt(ekf_slam.cov.item((2, 2)))]])))
+            UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks)
+        two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(fast_slam.cov.item((0, 0)))], [-2 * np.sqrt(fast_slam.cov.item((0, 0)))]])))
+        two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(fast_slam.cov.item((1, 1)))], [-2 * np.sqrt(fast_slam.cov.item((1, 1)))]])))
+        two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(fast_slam.cov.item((2, 2)))], [-2 * np.sqrt(fast_slam.cov.item((2, 2)))]])))
     if ~plot_live:
-        UpdatePlot(fig, lines, lines_est, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks)
+        UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks)
 
     # Plotting Vectors
     xe = mu[0, :]  # position x estimation
@@ -235,6 +238,6 @@ if __name__ == "__main__":
 
     # Covariance matrix
     plt.figure(5)
-    plt.imshow(ekf_slam.cov, "Greys")
-    plt.title('EKF SLAM Covariance Matrix')
+    plt.imshow(fast_slam.cov, "Greys")
+    plt.title('FAST SLAM Covariance Matrix')
     plt.show()
