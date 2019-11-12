@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-from scipy.io import loadmat
 
 # Generic model of Two-Wheeled Robot operating on a 20mx20m field. Three landmarks
 # are continuously visible to the robot. Robot can measure range and bearing to each landmark.
@@ -25,7 +24,7 @@ from scipy.io import loadmat
 
 
 class TWR:
-    def __init__(self, t_end=60, dt=0.1, n=15):
+    def __init__(self, t_end=60, dt=0.1, n=10):
 
         # Time parameters
         self.t_end = t_end        # completion time
@@ -39,7 +38,7 @@ class TWR:
         self.a_4 = 0.1 /2
 
         # Sensor Parameters
-        self.fov = 360 * np.pi/180
+        self.fov = 120 * np.pi/180
         self.sig_r = 0.1
         self.sig_phi = 0.05
 
@@ -147,7 +146,7 @@ class TWR:
         dx = c[0] - x[0]
         dy = c[1] - x[1]
         q = np.power(dx, 2) + np.power(dy, 2)
-        H = np.array([[-dx / np.sqrt(q), -dy / np.sqrt(q)], [dy / q, -dx / q]])
+        H = np.array([[dx / np.sqrt(q), dy / np.sqrt(q)], [-dy / q, dx / q]])
         return H
 
     def Wrap(self, th):

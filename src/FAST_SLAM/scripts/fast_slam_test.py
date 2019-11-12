@@ -3,7 +3,7 @@ from fast_slam import FAST_SLAM
 from twr import TWR
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, Wedge, Ellipse
+from matplotlib.patches import Circle, Wedge
 
 # ------------------------------------------------------------------
 # Summary:
@@ -34,12 +34,6 @@ def InitPlot(twr, body_radius):
     ax.add_artist(scan_angle)
     mlandmarks = []
     for i in range(twr.nl):
-        # # for patch ellipses
-        # han = Ellipse((150, 150), 1, 1, color='r', zorder=6, alpha=0.3)
-        # ax.add_artist(han)
-        # mlandmarks.append(han)
-
-        # for line ellipses
         han, = ax.plot([], [], 'r-', zorder=6)
         mlandmarks.append(han)
     mparticles, = ax.plot([], [], 'r.', zorder=7, markersize=3)
@@ -53,7 +47,7 @@ def InitPlot(twr, body_radius):
     return fig, lines, lines_est, mparticles, mlandmarks, robot_body, robot_head, scan_angle
 
 
-def UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks, w_landmarks, h_landmarks, ang_landmarks, X):
+def UpdatePlot(fig, lines, lines_est, mparticles, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks, w_landmarks, h_landmarks, ang_landmarks, X):
     xt = twr.x[0:2, :]  # position truth
     lines.set_xdata(xt[0, :])
     lines.set_ydata(xt[1, :])
@@ -66,15 +60,6 @@ def UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_r
     for i in range(int(len(mu_landmarks)/2)):
         mu_landmarks_x = np.hstack((mu_landmarks_x, mu_landmarks[2*i]))
         mu_landmarks_y = np.hstack((mu_landmarks_y, mu_landmarks[2*i+1]))
-
-    # # for patch ellipses
-    # for j in range(twr.nl):
-    #     if mu_landmarks_x[j] == 0 and mu_landmarks_y[j] == 0:
-    #         continue
-    #     mlandmarks[j].center = (mu_landmarks_x[j], mu_landmarks_y[j])
-    #     mlandmarks[j].width = w_landmarks[j]
-    #     mlandmarks[j].height = h_landmarks[j]
-    #     mlandmarks[j].angle = ang_landmarks[j]
 
     robot_body.center = ((twr.Getx())[0], (twr.Getx())[1])
     headx = np.array([twr.Getx()[0], twr.Getx()[0] + body_radius * np.cos(twr.Getx()[2])])
@@ -107,10 +92,9 @@ if __name__ == "__main__":
     w_landmarks = np.zeros((twr.nl, 1))
     h_landmarks = np.zeros((twr.nl, 1))
     ang_landmarks = np.zeros((twr.nl, 1))
-    K = fast_slam.K
-    two_sig_x = np.array([[2 * np.sqrt(fast_slam.cov.item((0, 0)))], [-2 * np.sqrt(fast_slam.cov.item((0, 0)))]])
-    two_sig_y = np.array([[2 * np.sqrt(fast_slam.cov.item((1, 1)))], [-2 * np.sqrt(fast_slam.cov.item((1, 1)))]])
-    two_sig_theta = np.array([[2 * np.sqrt(fast_slam.cov.item((2, 2)))], [-2 * np.sqrt(fast_slam.cov.item((2, 2)))]])
+    two_sig_x = np.array([[2 * np.sqrt(fast_slam.cov_bar.item((0, 0)))], [-2 * np.sqrt(fast_slam.cov_bar.item((0, 0)))]])
+    two_sig_y = np.array([[2 * np.sqrt(fast_slam.cov_bar.item((1, 1)))], [-2 * np.sqrt(fast_slam.cov_bar.item((1, 1)))]])
+    two_sig_theta = np.array([[2 * np.sqrt(fast_slam.cov_bar.item((2, 2)))], [-2 * np.sqrt(fast_slam.cov_bar.item((2, 2)))]])
     for i in range(int(twr.t_end/twr.dt)):
         # truth model updates
         twr.Propagate()
@@ -119,38 +103,44 @@ if __name__ == "__main__":
         # plotter updates
         mu = np.hstack((mu, fast_slam.mu_bar[0:3].reshape([3, 1])))
         mu_landmarks = np.hstack((mu_landmarks, fast_slam.mu_bar[3:].reshape([len(fast_slam.mu_bar[3:]), 1])))
+        if plot_live:
+            X = fast_slam.X
+            for i in range(twr.nl):
+                if ~(fast_slam.mu_bar[3 + 2*i] == 0 and fast_slam.mu_bar[3 + 2*i + 1] == 0):
+                    A = (fast_slam.cov_bar[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
+                    [U, S, _] = np.linalg.svd(A)
+                    C = U * 2*np.sqrt(S)
+                    theta = np.linspace(0, 2*np.pi, 100)
+                    circle = np.array([np.cos(theta), np.sin(theta)])
+                    ellipse = C @ circle
+                    ellipse[0, :] += fast_slam.mu_bar[3 + 2*i]
+                    ellipse[1, :] += fast_slam.mu_bar[3 + 2*i + 1]
+
+                    # update landmark covariance ellipses
+                    mlandmarks[i].set_xdata(ellipse[0, :])
+                    mlandmarks[i].set_ydata(ellipse[1, :])
+            UpdatePlot(fig, lines, lines_est, mparticles, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks, X)
+        two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(fast_slam.cov_bar.item((0, 0)))], [-2 * np.sqrt(fast_slam.cov_bar.item((0, 0)))]])))
+        two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(fast_slam.cov_bar.item((1, 1)))], [-2 * np.sqrt(fast_slam.cov_bar.item((1, 1)))]])))
+        two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(fast_slam.cov_bar.item((2, 2)))], [-2 * np.sqrt(fast_slam.cov_bar.item((2, 2)))]])))
+    if ~plot_live:
         X = fast_slam.X
-        K = np.hstack((K, fast_slam.K))
         for i in range(twr.nl):
-
-            # # for patch ellipses
-            # A = (fast_slam.cov[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
-            # w, v = np.linalg.eig(A)
-            # w_landmarks[i] = 2*np.sqrt(5.991*w[0])
-            # h_landmarks[i] = 2*np.sqrt(5.991*w[1])
-            # ang_landmarks[i] = np.arctan2(v[1, np.argmax(w)], v[0, np.argmax(w)])*180/np.pi
-
-            # for line ellipses
-            if ~(fast_slam.mu_bar[3 + 2*i] == 0 and fast_slam.mu_bar[3 + 2*i + 1] == 0):
+            if ~(fast_slam.mu_bar[3 + 2 * i] == 0 and fast_slam.mu_bar[3 + 2 * i + 1] == 0):
                 A = (fast_slam.cov_bar[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
                 [U, S, _] = np.linalg.svd(A)
-                C = U * 2*np.sqrt(S)
-                theta = np.linspace(0, 2*np.pi, 100)
+                C = U * 2 * np.sqrt(S)
+                theta = np.linspace(0, 2 * np.pi, 100)
                 circle = np.array([np.cos(theta), np.sin(theta)])
                 ellipse = C @ circle
-                ellipse[0, :] += fast_slam.mu_bar[3 + 2*i]
-                ellipse[1, :] += fast_slam.mu_bar[3 + 2*i + 1]
+                ellipse[0, :] += fast_slam.mu_bar[3 + 2 * i]
+                ellipse[1, :] += fast_slam.mu_bar[3 + 2 * i + 1]
 
+                # update landmark covariance ellipses
                 mlandmarks[i].set_xdata(ellipse[0, :])
                 mlandmarks[i].set_ydata(ellipse[1, :])
 
-        if plot_live:
-            UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks, X)
-        two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(fast_slam.cov.item((0, 0)))], [-2 * np.sqrt(fast_slam.cov.item((0, 0)))]])))
-        two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(fast_slam.cov.item((1, 1)))], [-2 * np.sqrt(fast_slam.cov.item((1, 1)))]])))
-        two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(fast_slam.cov.item((2, 2)))], [-2 * np.sqrt(fast_slam.cov.item((2, 2)))]])))
-    if ~plot_live:
-        UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks, X)
+        UpdatePlot(fig, lines, lines_est, mparticles, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks, X)
 
     # Plotting Vectors
     xe = mu[0, :]  # position x estimation
@@ -227,17 +217,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
 
-    # Plot kalman gain propogation
-    plt.figure(4)
-    for i in range(len(K)):
-        plt.plot(twr.t, K[i, :].flatten())
-    plt.ylabel('K')
-    plt.xlabel('t (s)')
-    plt.title('Kalman Gain Behavior')
-    plt.grid(True)
-
-    # Covariance matrix
-    plt.figure(5)
-    plt.imshow(fast_slam.cov, "Greys")
-    plt.title('FAST SLAM Covariance Matrix')
     plt.show()
