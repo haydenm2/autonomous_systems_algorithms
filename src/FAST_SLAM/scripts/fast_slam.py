@@ -47,7 +47,7 @@ class FAST_SLAM:
         self.sig_r = twr.sig_r
         self.sig_phi = twr.sig_phi
         self.dt = twr.dt
-        self.landmark_seen = np.zeros((1, self.nl))
+        self.landmark_seen = np.zeros((self.M, self.nl))
 
         self.Fx = np.hstack((np.eye(3), np.zeros([3, 2*self.nl])))
 
@@ -96,12 +96,12 @@ class FAST_SLAM:
                 indy = (3 + 2 * j)
                 if np.isnan(zr) or np.isnan(zphi):
                     continue
-                if not(self.landmark_seen[0, j]):
+                if not(self.landmark_seen[i, j]):
                     self.X_bar[(3 + 2 * j):(3 + 2 * j + 2), i] = self.h_inv(self.X_bar[0:3, i], zj).flatten()
                     H_inv = np.linalg.inv(self.H(self.X_bar[(3 + 2*j):(3 + 2*j + 2), i], self.X_bar[0:3, i]))
                     self.cov[indy:(indy+2), indx:(indx+2)] = H_inv @ self.Q @ H_inv.transpose()
-                    self.W_bar[i] = self.p0
-                    self.landmark_seen[0, j] = 1
+                    self.W_bar[0, i] = self.p0
+                    self.landmark_seen[i, j] = 1
                 else:
                     zhat = self.h(self.X_bar[0:3, i], self.X_bar[(3 + 2*j):(3 + 2*j+2), i])
                     H = self.H(self.X_bar[(3 + 2*j):(3 + 2*j + 2), i], self.X_bar[0:3, i])

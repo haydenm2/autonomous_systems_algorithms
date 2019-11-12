@@ -102,8 +102,8 @@ if __name__ == "__main__":
 
     body_radius = 0.3
     fig, lines, lines_est, mparticles, mlandmarks, robot_body, robot_head, scan_angle = InitPlot(twr, body_radius)
-    mu = fast_slam.mu[0:3].reshape([3, 1])
-    mu_landmarks = fast_slam.mu[3:].reshape([len(fast_slam.mu[3:]), 1])
+    mu = fast_slam.mu_bar[0:3].reshape([3, 1])
+    mu_landmarks = fast_slam.mu_bar[3:].reshape([len(fast_slam.mu_bar[3:]), 1])
     w_landmarks = np.zeros((twr.nl, 1))
     h_landmarks = np.zeros((twr.nl, 1))
     ang_landmarks = np.zeros((twr.nl, 1))
@@ -117,8 +117,8 @@ if __name__ == "__main__":
         fast_slam.Propogate(twr.Getu(), twr.Getz())
 
         # plotter updates
-        mu = np.hstack((mu, fast_slam.mu[0:3].reshape([3, 1])))
-        mu_landmarks = np.hstack((mu_landmarks, fast_slam.mu[3:].reshape([len(fast_slam.mu[3:]), 1])))
+        mu = np.hstack((mu, fast_slam.mu_bar[0:3].reshape([3, 1])))
+        mu_landmarks = np.hstack((mu_landmarks, fast_slam.mu_bar[3:].reshape([len(fast_slam.mu_bar[3:]), 1])))
         X = fast_slam.X
         K = np.hstack((K, fast_slam.K))
         for i in range(twr.nl):
@@ -131,15 +131,15 @@ if __name__ == "__main__":
             # ang_landmarks[i] = np.arctan2(v[1, np.argmax(w)], v[0, np.argmax(w)])*180/np.pi
 
             # for line ellipses
-            if ~(fast_slam.mu[3 + 2*i] == 0 and fast_slam.mu[3 + 2*i + 1] == 0):
-                A = (fast_slam.cov[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
+            if ~(fast_slam.mu_bar[3 + 2*i] == 0 and fast_slam.mu_bar[3 + 2*i + 1] == 0):
+                A = (fast_slam.cov_bar[3:, 3:])[i * 2:(i + 1) * 2, i * 2:(i + 1) * 2]
                 [U, S, _] = np.linalg.svd(A)
                 C = U * 2*np.sqrt(S)
                 theta = np.linspace(0, 2*np.pi, 100)
                 circle = np.array([np.cos(theta), np.sin(theta)])
                 ellipse = C @ circle
-                ellipse[0, :] += fast_slam.mu[3 + 2*i]
-                ellipse[1, :] += fast_slam.mu[3 + 2*i + 1]
+                ellipse[0, :] += fast_slam.mu_bar[3 + 2*i]
+                ellipse[1, :] += fast_slam.mu_bar[3 + 2*i + 1]
 
                 mlandmarks[i].set_xdata(ellipse[0, :])
                 mlandmarks[i].set_ydata(ellipse[1, :])
