@@ -29,6 +29,10 @@ class FAST_SLAM:
         self.cov[0, 0] = 0
         self.cov[1, 1] = 0
         self.cov[2, 2] = 0
+        self.cov_bar = np.eye(3 + 2 * self.nl)
+        self.cov_bar[0, 0] = 0
+        self.cov_bar[1, 1] = 0
+        self.cov_bar[2, 2] = 0
 
         self.G = np.eye(3 + 2*self.nl)
         self.V = np.zeros([3, 2])
@@ -58,7 +62,7 @@ class FAST_SLAM:
 
     def Propogate(self, u, z):
         self.X_bar = np.empty([self.n, 0])
-        self.W_bar = np.empty([1, 0])
+        self.W_bar = np.ones([1, self.M])*1/self.M
 
         self.X_bar = self.PropogatePoints(u, self.X)
 
@@ -95,21 +99,21 @@ class FAST_SLAM:
                 if not(self.landmark_seen[0, j]):
                     self.X_bar[(3 + 2 * j):(3 + 2 * j + 2), i] = self.h_inv(self.X_bar[0:3, i], zj).flatten()
                     H_inv = np.linalg.inv(self.H(self.X_bar[(3 + 2*j):(3 + 2*j + 2), i], self.X_bar[0:3, i]))
-                    self.cov[indx:(indx+2), indy:(indy+2)] = H_inv @ self.Q @ H_inv.transpose()
+                    self.cov[indy:(indy+2), indx:(indx+2)] = H_inv @ self.Q @ H_inv.transpose()
                     self.W_bar[i] = self.p0
                     self.landmark_seen[0, j] = 1
                 else:
                     zhat = self.h(self.X_bar[0:3, i], self.X_bar[(3 + 2*j):(3 + 2*j+2), i])
                     H = self.H(self.X_bar[(3 + 2*j):(3 + 2*j + 2), i], self.X_bar[0:3, i])
-                    Q = H @ self.cov[indx:(indx+2), indy:(indy+2)] @ H.transpose() + self.Q
-                    K = self.cov[indx:(indx+2), indy:(indy+2)] @ H.transpose() @ np.linalg.inv(Q)
+                    Q = H @ self.cov[indy:(indy+2), indx:(indx+2)] @ H.transpose() + self.Q
+                    K = self.cov[indy:(indy+2), indx:(indx+2)] @ H.transpose() @ np.linalg.inv(Q)
                     self.X_bar[(3 + 2 * j):(3 + 2 * j + 2), i] = self.X_bar[(3 + 2 * j):(3 + 2 * j + 2), i] + (K @ (zj - zhat)).flatten()
-                    self.cov[indx:(indx + 2), indy:(indy + 2)] = (np.eye(2) - K @ H) @ self.cov[indx:(indx+2), indy:(indy+2)]
+                    self.cov[indy:(indy + 2), indx:(indx + 2)] = (np.eye(2) - K @ H) @ self.cov[indy:(indy+2), indx:(indx+2)]
                     zdiff = zj - zhat
-                    self.W_bar[i] = np.linalg.det(2*np.pi*Q)**(-1/2) * np.exp(-1/2 * zdiff.transpose() @ np.linalg.inv(Q) @ zdiff)
+                    self.W_bar[0, i] = np.linalg.det(2*np.pi*Q)**(-1/2) * np.exp(-1/2 * zdiff.transpose() @ np.linalg.inv(Q) @ zdiff)
 
     def Resample(self):
-        X_bar = np.empty([self.n, 0])
+        X_bar = np.empty([self.n + 2*self.nl, 0])
         self.W_bar = np.empty([1, 0])
         Minv = 1/self.M
         r = np.random.uniform(low=0, high=Minv)
@@ -120,21 +124,21 @@ class FAST_SLAM:
             while U > c:
                 i = i+1
                 c = c + self.W[0, i]
-            X_bar = np.hstack((X_bar, self.X_bar[:, i].reshape((3, 1))))
+            X_bar = np.hstack((X_bar, self.X_bar[:, i].reshape((self.n + 2*self.nl, 1))))
         uniq = len(np.unique(X_bar))
 
         # introduce synthetic noise if convergence is too fast
         if uniq/self.M < 0.5:
-            Q = self.cov/((self.M*uniq)**(1/self.n))
+            Q = self.cov_bar/((self.M*uniq)**(1/self.n))
             X_bar = X_bar + Q @ np.random.randn(np.shape(X_bar)[0], np.shape(X_bar)[1])
         self.X = X_bar
 
 
     def EstimateMeanCov(self):
-        self.mu = np.mean(self.X, axis=1).reshape((self.n + 2*self.nl, 1))
-        E = (self.X - self.mu)
+        self.mu_bar = np.mean(self.X, axis=1).reshape((self.n + 2*self.nl, 1))
+        E = (self.X - self.mu_bar)
         E[2, :] = self.Wrap(E[2, :])
-        self.cov = 1/(len(self.X[0]) - 1) * (E @ E.transpose())
+        self.cov_bar = 1/(len(self.X[0]) - 1) * (E @ E.transpose())
         pass
 
     def Wrap(self, th):
@@ -148,6 +152,16 @@ class FAST_SLAM:
             if th_wrap < 0:
                 th_wrap += 2 * np.pi
         return th_wrap - np.pi
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -145,12 +145,12 @@ if __name__ == "__main__":
                 mlandmarks[i].set_ydata(ellipse[1, :])
 
         if plot_live:
-            UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks)
+            UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks, X)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(fast_slam.cov.item((0, 0)))], [-2 * np.sqrt(fast_slam.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(fast_slam.cov.item((1, 1)))], [-2 * np.sqrt(fast_slam.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(fast_slam.cov.item((2, 2)))], [-2 * np.sqrt(fast_slam.cov.item((2, 2)))]])))
     if ~plot_live:
-        UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks)
+        UpdatePlot(fig, lines, lines_est, mparticles, mlandmarks, robot_body, body_radius, robot_head, scan_angle, twr, mu, mu_landmarks[:, -1], w_landmarks, h_landmarks, ang_landmarks, X)
 
     # Plotting Vectors
     xe = mu[0, :]  # position x estimation
