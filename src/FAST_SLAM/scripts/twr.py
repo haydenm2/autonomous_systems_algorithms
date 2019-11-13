@@ -38,7 +38,7 @@ class TWR:
         self.a_4 = 0.1 /2
 
         # Sensor Parameters
-        self.fov = 120 * np.pi/180
+        self.fov = 90 * np.pi/180
         self.sig_r = 0.1
         self.sig_phi = 0.05
 

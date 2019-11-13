@@ -109,7 +109,7 @@ class FAST_SLAM:
                     self.X_bar[(3 + 2 * j):(3 + 2 * j + 2), i] = self.X_bar[(3 + 2 * j):(3 + 2 * j + 2), i] + (K @ (zj - zhat)).flatten()
                     self.cov[indy:(indy + 2), indx:(indx + 2)] = (np.eye(2) - K @ H) @ self.cov[indy:(indy+2), indx:(indx+2)]
                     zdiff = zj - zhat
-                    self.W_bar[0, i] = np.linalg.det(2*np.pi*Q)**(-1/2) * np.exp(-1/2 * zdiff.transpose() @ np.linalg.inv(Q) @ zdiff)
+                    self.W_bar[0, i] *= np.linalg.det(2*np.pi*Q)**(-1/2) * np.exp(-1/2 * zdiff.transpose() @ np.linalg.inv(Q) @ zdiff)
 
     def Resample(self):
         X_bar = np.empty([self.n + 2*self.nl, 0])
