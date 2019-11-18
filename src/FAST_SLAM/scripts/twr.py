@@ -24,7 +24,7 @@ import numpy as np
 
 
 class TWR:
-    def __init__(self, t_end=60, dt=0.1, n=10):
+    def __init__(self, t_end=60, dt=0.1, n=8):
 
         # Time parameters
         self.t_end = t_end        # completion time
@@ -36,6 +36,8 @@ class TWR:
         self.a_2 = 0.01 /2
         self.a_3 = 0.01 /2
         self.a_4 = 0.1 /2
+        self.a_5 = 0.001 /2
+        self.a_6 = 0.001 /2
 
         # Sensor Parameters
         self.fov = 90 * np.pi/180
@@ -86,7 +88,7 @@ class TWR:
 
         v = self.u_new[0] + np.sqrt(self.a_1 * np.power(self.u_new[0], 2) + self.a_2 * np.power(self.u_new[1], 2)) * np.random.randn()
         w = self.u_new[1] + np.sqrt(self.a_3 * np.power(self.u_new[0], 2) + self.a_4 * np.power(self.u_new[1], 2)) * np.random.randn()
-        gamma = 0
+        gamma = 0 #np.sqrt(self.a_5 * np.power(self.u_new[0], 2) + self.a_6 * np.power(self.u_new[1], 2)) * np.random.randn()
         self.x_new[0] = self.x[0, len(self.x[0])-1] - (v/w) * np.sin(self.x[2, len(self.x[0])-1]) + (v/w) * np.sin(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[1] = self.x[1, len(self.x[0])-1] + (v/w) * np.cos(self.x[2, len(self.x[0])-1]) - (v/w) * np.cos(self.x[2, len(self.x[0])-1] + w*self.dt)
         self.x_new[2] = self.x[2, len(self.x[0])-1] + w * self.dt + gamma * self.dt

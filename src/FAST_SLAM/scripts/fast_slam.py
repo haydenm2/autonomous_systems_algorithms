@@ -43,6 +43,8 @@ class FAST_SLAM:
         self.a_2 = twr.a_2
         self.a_3 = twr.a_3
         self.a_4 = twr.a_4
+        self.a_5 = twr.a_5
+        self.a_6 = twr.a_6        
         self.sig_r = twr.sig_r
         self.sig_phi = twr.sig_phi
         self.dt = twr.dt
