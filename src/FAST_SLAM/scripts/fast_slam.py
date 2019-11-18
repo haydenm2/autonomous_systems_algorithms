@@ -129,9 +129,9 @@ class FAST_SLAM:
         uniq = len(np.unique(X_bar))
 
         # introduce synthetic noise if convergence is too fast
-        if uniq/self.M < 0.5:
-            Q = self.cov_bar/((self.M*uniq)**(1/self.n))
-            X_bar = X_bar + Q @ np.random.randn(np.shape(X_bar)[0], np.shape(X_bar)[1])
+        # if uniq/self.M < 0.5:
+        #     Q = self.cov_bar/((self.M*uniq)**(1/self.n))
+        #     X_bar = X_bar + Q @ np.random.randn(np.shape(X_bar)[0], np.shape(X_bar)[1])
         self.X = X_bar
 
 
