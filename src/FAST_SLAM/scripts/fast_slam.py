@@ -11,7 +11,7 @@ class FAST_SLAM:
         self.n = twr.n
 
         # Particle parameters
-        self.M = 1000
+        self.M = 100
         self.X = np.zeros([self.n + 2 * self.nl, self.M])
         for i in range(self.M):
             self.X[0, i] = twr.x0[0]  # (2 * np.random.rand() - 1) * 10

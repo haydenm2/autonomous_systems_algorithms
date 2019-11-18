@@ -145,7 +145,7 @@ if __name__ == "__main__":
                 circle = np.array([np.cos(theta), np.sin(theta)])
                 ellipse = C @ circle
                 ellipse[0, :] += fast_slam.mu_bar[3 + 2 * i]
-                ellipse[1, :] += fast_slam.mu_bar[3 + 3 * i]
+                ellipse[1, :] += fast_slam.mu_bar[3 + 2 * i + 1]
 
                 # update landmark covariance ellipses
                 mlandmarks[i].set_xdata(ellipse[0, :])
