@@ -10,7 +10,6 @@ from scipy.io import loadmat
 # Example of implementation of the markov decision process class for a robot planning through a 2D map
 
 
-
 def InitPlot(mdp, body_radius, map):
     fig, ax = plt.subplots()
     lines, = ax.plot([], [], 'g--', zorder=1)
@@ -55,6 +54,7 @@ if __name__ == "__main__":
     x0 = np.array((28,20))
 
     mdp = MDP(Np, Np, goal, obs, walls, x0)       # MDP algorithm object
+    mdp.Solve()
 
     body_radius = 1.5
     fig, lines, robot_body, robot_head, img = InitPlot(mdp, body_radius, mdp.map[2, :, :])
