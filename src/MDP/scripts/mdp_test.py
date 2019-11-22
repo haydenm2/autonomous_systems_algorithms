@@ -56,9 +56,4 @@ if __name__ == "__main__":
     mdp = MDP(Np, Np, goal, obs, walls, x0)       # MDP algorithm object
     mdp.Solve()
 
-    body_radius = 1.5
-    fig, lines, robot_body, robot_head, img = InitPlot(mdp, body_radius, mdp.map[2, :, :])
-    xt = mdp.X[:, 0].reshape(3, 1)
-    UpdatePlot(fig, lines, robot_body, body_radius, robot_head, img, xt, mdp.map[2, :, :])
-
     plt.show()

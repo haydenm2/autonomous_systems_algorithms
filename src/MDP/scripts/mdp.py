@@ -82,7 +82,8 @@ class MDP:
         fig, ax = plt.subplots()
         img = ax.imshow(self.value_map)
         fig.colorbar(img, ax=ax)
-        self.map_handles = [ax, img]
+        lines, = ax.plot([], [], 'r--')
+        self.map_handles = [ax, img, lines]
 
     def Solve(self):
         self.ValueIteration()
@@ -106,6 +107,8 @@ class MDP:
             self.policy_map[1:self.l_cells-1, 1:self.w_cells-1] = np.multiply(np.argmax(map, axis=0), self.mask[1:self.l_cells-1, 1:self.w_cells-1])
             self.policy_map += (self.policy_goal + self.policy_obstacles + self.policy_walls)
             # self.VisualizeMap()
+
+            # Check Convergence
             error = np.sum(np.sum(self.value_map - map_prev))
             if error < self.error_threshold:
                 self.convergence = True
@@ -114,15 +117,25 @@ class MDP:
         while(True):
             i = self.optimal_policy[0, -1]
             j = self.optimal_policy[1, -1]
-            # if self.policy_map[]
+            current_policy = self.policy_map[self.optimal_policy[0, -1], self.optimal_policy[1, -1]]
+            if current_policy == 0:  # north
+                next_policy = np.array([[i + 1], [j]])
+            elif current_policy == 1:  # east
+                next_policy = np.array([[i], [j - 1]])
+            elif current_policy == 2:  # south
+                next_policy = np.array([[i - 1], [j]])
+            elif current_policy == 3:  # west
+                next_policy = np.array([[i], [j + 1]])
+            self.optimal_policy = np.hstack((self.optimal_policy, next_policy))
+            self.VisualizeMap()
 
-        pass
-
-    def CheckConvergence(self):
-        pass
+            if self.policy_map[self.optimal_policy[0, -1], self.optimal_policy[1, -1]] == -1:
+                break
 
     def VisualizeMap(self):
         (self.map_handles[1]).set_data(self.value_map)
+        (self.map_handles[2]).set_xdata(self.optimal_policy[0, :])
+        (self.map_handles[2]).set_ydata(self.optimal_policy[1, :])
         # (self.map_handles[1]).autoscale()
         plt.pause(0.1)
 
