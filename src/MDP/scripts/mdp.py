@@ -63,7 +63,7 @@ class MDP:
         self.num_cells = self.l_cells * self.w_cells
 
         # inverse range sensor model parameters
-        self.discount_factor = 1.0 # 0.88
+        self.discount_factor = 1.0
 
         # motion probability
         self.forward_probability = 0.8
@@ -86,9 +86,11 @@ class MDP:
         self.map_handles = [ax, img, lines]
 
     def Solve(self):
+        print("Solving Value Map...")
         self.ValueIteration()
+        print("Solving Optimal Policy...")
         self.PolicyAssignment()
-        # self.Solve()
+        print("Solution Found!")
 
     def ValueIteration(self):
         while not self.convergence:
@@ -141,17 +143,14 @@ class MDP:
     def VisualizePolicyMap(self):
         for i in range(self.l_cells):
             for j in range(self.w_cells):
-                if self.policy_map[i, j] == 3:  # north
-                    plt.arrow(i+0.5, j, 0, 1, length_includes_head=True, head_width=0.2, head_length=0.2)
-                elif self.policy_map[i, j] == 0:  # east
-                    plt.arrow(i, j+0.5, 1, 0, length_includes_head=True, head_width=0.2, head_length=0.2)
-                elif self.policy_map[i, j] == 1:  # south
-                    plt.arrow(i+0.5, j+1, 0, -1, length_includes_head=True, head_width=0.2, head_length=0.2)
-                elif self.policy_map[i, j] == 2:  # west
-                    plt.arrow(i+1, j+0.5, -1, 0, length_includes_head=True, head_width=0.2, head_length=0.2)
+                if self.policy_map[i, j] == 0:  # north
+                    plt.arrow(i, j+0.5, 0.7, 0, length_includes_head=True, head_width=0.4, head_length=0.2)
+                elif self.policy_map[i, j] == 1:  # east
+                    plt.arrow(i+0.5, j+1, 0, -0.7, length_includes_head=True, head_width=0.4, head_length=0.2)
+                elif self.policy_map[i, j] == 2:  # south
+                    plt.arrow(i+1, j+0.5, -0.7, 0, length_includes_head=True, head_width=0.4, head_length=0.2)
+                elif self.policy_map[i, j] == 3:  # west
+                    plt.arrow(i + 0.5, j, 0, 0.7, length_includes_head=True, head_width=0.4, head_length=0.2)
                 else:
                     continue
         plt.pause(0.1)
-
-
-
