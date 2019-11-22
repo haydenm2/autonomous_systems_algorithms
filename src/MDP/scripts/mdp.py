@@ -63,7 +63,7 @@ class MDP:
         self.num_cells = self.l_cells * self.w_cells
 
         # inverse range sensor model parameters
-        self.discount_factor = 1.0
+        self.discount_factor = 1.0 # 0.88
 
         # motion probability
         self.forward_probability = 0.8
@@ -127,16 +127,15 @@ class MDP:
             elif current_policy == 3:  # west
                 next_policy = np.array([[i], [j + 1]])
             self.optimal_policy = np.hstack((self.optimal_policy, next_policy))
-            self.VisualizeMap()
+            # self.VisualizeMap()
 
             if self.policy_map[self.optimal_policy[0, -1], self.optimal_policy[1, -1]] == -1:
                 break
 
     def VisualizeMap(self):
-        (self.map_handles[1]).set_data(self.value_map)
+        (self.map_handles[1]).set_data(self.value_map.transpose())
         (self.map_handles[2]).set_xdata(self.optimal_policy[0, :])
         (self.map_handles[2]).set_ydata(self.optimal_policy[1, :])
-        # (self.map_handles[1]).autoscale()
         plt.pause(0.1)
 
 

@@ -55,5 +55,6 @@ if __name__ == "__main__":
 
     mdp = MDP(Np, Np, goal, obs, walls, x0)       # MDP algorithm object
     mdp.Solve()
+    mdp.VisualizeMap()
 
     plt.show()
