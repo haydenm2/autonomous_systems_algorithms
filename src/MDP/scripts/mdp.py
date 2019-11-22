@@ -80,7 +80,7 @@ class MDP:
 
         # map plotting
         fig, ax = plt.subplots()
-        img = ax.imshow(self.value_map)
+        img = ax.imshow(self.value_map, origin='lower')
         fig.colorbar(img, ax=ax)
         lines, = ax.plot([], [], 'r--')
         self.map_handles = [ax, img, lines]
@@ -136,6 +136,21 @@ class MDP:
         (self.map_handles[1]).set_data(self.value_map.transpose())
         (self.map_handles[2]).set_xdata(self.optimal_policy[0, :])
         (self.map_handles[2]).set_ydata(self.optimal_policy[1, :])
+        plt.pause(0.1)
+
+    def VisualizePolicyMap(self):
+        for i in range(self.l_cells):
+            for j in range(self.w_cells):
+                if self.policy_map[i, j] == 3:  # north
+                    plt.arrow(i+0.5, j, 0, 1, length_includes_head=True, head_width=0.2, head_length=0.2)
+                elif self.policy_map[i, j] == 0:  # east
+                    plt.arrow(i, j+0.5, 1, 0, length_includes_head=True, head_width=0.2, head_length=0.2)
+                elif self.policy_map[i, j] == 1:  # south
+                    plt.arrow(i+0.5, j+1, 0, -1, length_includes_head=True, head_width=0.2, head_length=0.2)
+                elif self.policy_map[i, j] == 2:  # west
+                    plt.arrow(i+1, j+0.5, -1, 0, length_includes_head=True, head_width=0.2, head_length=0.2)
+                else:
+                    continue
         plt.pause(0.1)
 
 
