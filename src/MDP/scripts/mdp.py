@@ -5,23 +5,6 @@ import matplotlib.pyplot as plt
 
 # Generic Markov Decision Process Model (From Probablistic Robotics)
 
-# Implement the discrete value iteration algorithm for MDP's outlined in Table 14.1.
-#
-# Demonstrate your algorithm by finding the optimal path through the map specified by this Matlab script: MDP_hw_map.m  Download
-#
-# Use a discount factor of 1 initially. Assign each cell of the map with a nominal cost of -2. Assign goal cells a reward of +100000, obstacles a cost of -5000, and walls a cost of -100.
-#
-# Assume that control actions result in your robot moving north, east, south, or west, and that your robot moves in the commanded direction with probability 0.8, 90 deg left of the commanded direction with probability 0.1, and 90 deg right of the commanded direction with probability 0.1.
-#
-# (1) Create a plot of the optimal policy for the specified map. Here's a function to draw arrows if you care to use it:draw_arrow.m  Download
-#
-# (2) Create a plot of the value function for specified map and robot characteristics.
-#
-# (3) With the robot starting in the initial state (28,20), plot the path to the goal region based on the optimal policy.
-#
-# (4) Exercise you algorithm by changing the map, the initial condition on the robot location, the costs/rewards in the map, the discount factor, and the uncertainty model associated with the robot motion p(xj | u, xi). Does the algorithm give the results you'd expect?
-
-
 class MDP:
     def __init__(self, grid_l, grid_w, goal, obs, walls, x0):
 
