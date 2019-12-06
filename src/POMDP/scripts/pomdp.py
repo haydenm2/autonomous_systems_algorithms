@@ -35,21 +35,16 @@ class POMDP:
         # self.Y0 = np.array([[0, self.r[1, 0], self.r[0, 0]], [1, self.r[1, 1], self.r[0, 1]]])
         self.Y0 = np.hstack((self.r[0, 0:self.N].reshape(-1, 1), self.r[1, 0:self.N].reshape(-1, 1)))
 
-        self.pruning_res = 0.01
+        self.pruning_res = 0.0001
         pass
 
     def CreateValueMap(self):
         self.Visualize()
         for tau in range(self.T):
             self.Sense()
-            print("1: ", self.Y)
             self.Prune()
-            print("2: ", self.Y)
             self.Prediction()
-            print("3: ", self.Y)
             self.Prune()
-            print("4: ", self.Y)
-            print("")
             self.Visualize()
         print(self.Y)
 
@@ -61,8 +56,8 @@ class POMDP:
         self.Y = Ypr1[combos[0, :]] + Ypr2[combos[1, :]]
 
     def Prediction(self):
-        self.Y = self.Y @ self.pt
-        pass
+        self.Y = (self.Y @ self.pt) - 1
+        self.Y = np.vstack((self.Y0, self.Y))
 
     def Prune(self):
         probs = np.vstack([np.arange(0, 1+self.pruning_res, self.pruning_res), np.arange(0, 1+self.pruning_res, self.pruning_res)[::-1]])
@@ -77,6 +72,7 @@ class POMDP:
         plt.xlabel('Belief in State 1 (b(x1))')
         for i in range(self.K):
             plt.plot([self.Y[i, 1], self.Y[i, 0]], 'r-')
-        plt.pause(0.2)
+        plt.pause(0.1)
+        plt.clf()
 
 
