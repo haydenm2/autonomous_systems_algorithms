@@ -9,4 +9,5 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
     pomdp = POMDP()       # MDP algorithm object
     pomdp.CreateValueMap()
+    pomdp.Play()
     plt.show()
