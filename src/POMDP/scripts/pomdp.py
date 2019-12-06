@@ -5,11 +5,6 @@ import matplotlib.pyplot as plt
 
 # Generic Partially Observable Markov Decision Process Model (From Probablistic Robotics)
 
-# Implement algorithm 15.1 with the objective of representing the value function for the illustrative example of section 15.2
-# Compute the value function for the example for a time horizon of 2 and show that you obtain the linear value function constraints of equation 15.31 (along with a few others that have not been pruned away).
-# Develop a simple pruning strategy to prune away some of the obviously superfluous constraints (replicates of initial payoff constraints, constraints dominated by (lying below) the payoff constraint for u3).
-# Modify the state transition probability for u3 as well as the measurement probabilities for states x1 and x2. Compute value functions for different probabilities. Do your results make sense? Change the payoffs associated with the control actions and compute the value function. Do the results make sense?
-
 class POMDP:
     def __init__(self, t=20):
         self.T = t  # time horizon
@@ -36,14 +31,11 @@ class POMDP:
         self.x_true = [0]
         self.x_estimated = [1]
         self.z_received = []
-        self.p1 = 0.5  # initial belief of state being x1
+        self.p1 = 0.6  # initial belief of state being x1
         self.cost = 0
 
         # plotter init
         plt.figure(1)
-        plt.title('Value Functions')
-        plt.ylabel('Reward (r)')
-        plt.xlabel('Belief in State 1 (b(x1))')
         self.live_viz = False
 
     def CreateValueMap(self):
@@ -78,6 +70,9 @@ class POMDP:
 
     def VisualizeValues(self):
         plt.clf()
+        plt.title('Value Functions')
+        plt.ylabel('Reward (r)')
+        plt.xlabel('Belief in State 1 (b(x1))')
         for i in range(self.K):
             plt.plot([self.Y[i, 1], self.Y[i, 0]], 'r-')
         plt.pause(0.1)
@@ -88,14 +83,14 @@ class POMDP:
             r = np.random.rand()
             if r <= self.pz[self.x_true[-1], self.x_true[-1]]:
                 self.z_received.append(self.x_true[-1])
-                print('good')
             else:
                 self.z_received.append(int(not(self.x_true[-1])))
-                print('bad')
 
-            # update belief from sensor
-            self.p1 = self.pz[0, 0]*self.p1/(self.pz[0, 0]*self.p1 + self.pz[0, 1]*(1-self.p1))
-            print(self.p1)
+            # update belief from sensor measurement
+            if self.z_received[-1] == 0:
+                self.p1 = self.pz[0, 0]*self.p1/(self.pz[0, 0]*self.p1 + self.pz[0, 1]*(1-self.p1))
+            else:
+                self.p1 = self.pz[1, 0] * self.p1 / (1-(self.pz[0, 0] * self.p1 + self.pz[0, 1] * (1 - self.p1)))
 
             # determine intended action and cost
             self.action_command.append(int(self.Y_final_w_commands[np.argmax(self.Y @ np.array([self.p1, 1 - self.p1])), 0]))  # propogate
@@ -107,21 +102,18 @@ class POMDP:
                 r = np.random.rand()
                 if r <= self.pt[self.x_true[-1], int(not(self.x_true[-1]))]:
                     self.x_true.append(int(not(self.x_true[-1])))
-                    print('good')
                 else:
                     self.x_true.append(self.x_true[-1])
-                    print('bad')
             else:
                 pass
 
             # update belief from action
             self.p1 = self.pt[0, 0]*self.p1 + self.pt[0, 1]*(1-self.p1)
-            print(self.p1)
-            print("")
 
             # check if terminal action
             if self.action_command[-1] != 2:
                 print("Final Score: ", self.cost)
+                print("Total Number of Actions: ", len(self.action_command))
                 if (self.r[self.x_true[-1], self.action_command[-1]] == self.r[0,0]) or (self.r[self.x_true[-1], self.action_command[-1]] == self.r[1,1]):
                     if self.action_command[-1] == 0:
                         print("Drove Forward into lava. You Lose...")
@@ -133,8 +125,3 @@ class POMDP:
                     else:
                         print("Drove Backward through Door. You Win!")
                 break
-
-
-
-
-
