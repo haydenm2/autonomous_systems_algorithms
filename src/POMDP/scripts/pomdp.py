@@ -124,4 +124,6 @@ class POMDP:
                         print("Drove Foward through Door. You Win!")
                     else:
                         print("Drove Backward through Door. You Win!")
+                print("[ x_t | x_e | z | u ]")
+                print(np.hstack((np.asarray(self.x_true).reshape(-1, 1), np.asarray(self.x_estimated).reshape(-1, 1), np.asarray(self.z_received).reshape(-1, 1), np.asarray(self.action_command).reshape(-1, 1))))
                 break
