@@ -28,8 +28,7 @@ class POMDP:
 
         # action simulation params
         self.action_command = []
-        self.x_true = [0]
-        self.x_estimated = [1]
+        self.x_true = [1]
         self.z_received = []
         self.p1 = 0.6  # initial belief of state being x1
         self.cost = 0
@@ -48,6 +47,7 @@ class POMDP:
             self.Prune()
         self.VisualizeValues()
         self.Y_final_w_commands = np.hstack((np.hstack((0, 1, np.ones(len(self.Y)-2)*2)).reshape(-1, 1), self.Y))
+        print("------------------VALUE MAP RESULTS------------------")
         print(self.Y)
 
     def Sense(self):
@@ -73,6 +73,7 @@ class POMDP:
         plt.title('Value Functions')
         plt.ylabel('Reward (r)')
         plt.xlabel('Belief in State 1 (b(x1))')
+        plt.grid(True)
         for i in range(self.K):
             plt.plot([self.Y[i, 1], self.Y[i, 0]], 'r-')
         plt.pause(0.1)
@@ -98,7 +99,6 @@ class POMDP:
 
             # determine true and estimated states
             if self.action_command[-1] == 2:
-                self.x_estimated.append(int(not(self.x_estimated[-1])))
                 r = np.random.rand()
                 if r <= self.pt[self.x_true[-1], int(not(self.x_true[-1]))]:
                     self.x_true.append(int(not(self.x_true[-1])))
@@ -112,6 +112,8 @@ class POMDP:
 
             # check if terminal action
             if self.action_command[-1] != 2:
+                print("")
+                print("------------------SIMULATING------------------")
                 print("Final Score: ", self.cost)
                 print("Total Number of Actions: ", len(self.action_command))
                 if (self.r[self.x_true[-1], self.action_command[-1]] == self.r[0,0]) or (self.r[self.x_true[-1], self.action_command[-1]] == self.r[1,1]):
@@ -124,6 +126,6 @@ class POMDP:
                         print("Drove Foward through Door. You Win!")
                     else:
                         print("Drove Backward through Door. You Win!")
-                print("[ x_t | x_e | z | u ]")
-                print(np.hstack((np.asarray(self.x_true).reshape(-1, 1), np.asarray(self.x_estimated).reshape(-1, 1), np.asarray(self.z_received).reshape(-1, 1), np.asarray(self.action_command).reshape(-1, 1))))
+                print("[ z | x_t | u ]")
+                print(np.hstack((np.asarray(self.z_received).reshape(-1, 1), np.asarray(self.x_true).reshape(-1, 1), np.asarray(self.action_command).reshape(-1, 1))))
                 break
