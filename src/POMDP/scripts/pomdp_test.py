@@ -8,5 +8,5 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     pomdp = POMDP()       # MDP algorithm object
-    pomdp.Run()
+    pomdp.CreateValueMap()
     plt.show()
