@@ -12,16 +12,16 @@ import matplotlib.pyplot as plt
 # Using the probability and payoff parameters of your choice, use the associated value function to choose control actions. Assume that your true initial state is x1 and that your belief is 0.6. What outcomes do you obtain for 10 trials? Do you outcomes align with your expectations? Did your value function produce good results?
 
 class POMDP:
-    def __init__(self, t=1):
+    def __init__(self, t=2):
         self.T = t  # time horizon
         self.gamma = 1.0  # discount factor
-        self.Y = np.array([[0, 0, 0]])
 
         # dimension space of problem
         self.N = 2  # number of states (x1,x2) = (facing forward, facing backward)
         self.Nu = 3  # number of control inputs (u1,u2,u3) = (drive forward, drive backward, turn around)
         self.Nz = 2  # number of measurements (z1,z2) = (sense forward, sense backward)
 
+        # rewards and probabilities
         self.r = np.array([[-100, 100, -1], [100, -50, -1]])  # reward r(x_i, u_iu)
         self.pt = np.array([[0.2, 0.8], [0.8, 0.2]])  # transition probabilities pt(x_i ' | x_j, u_iu)
         self.pz = np.array([[0.7, 0.3], [0.3, 0.7]])  # measurement probabilites px(z_iz | x_j)
@@ -29,45 +29,40 @@ class POMDP:
         self.K = 1  # number of linear constraint functions
         self.cost = 0  # cost accrued
         self.p1 = 0.5  # initial belief of state being x1
+        self.Y = np.zeros((self.K, 1+self.N))
+
+        # self.Y0 = np.array([[0, self.r[1, 0], self.r[0, 0]], [1, self.r[1, 1], self.r[0, 1]]])
+        self.Y0 = np.hstack((np.array([[1], [2]]), self.r[0, 0:self.N].reshape(-1, 1), self.r[1, 0:self.N].reshape(-1, 1)))
+
+        self.pruning_res = 0.01
+        pass
 
     def Run(self):
         for tau in range(self.T):
-            Ypr = []
-            #  calculate linear constraints for all u_pr
-            v = np.zeros((self.K, self.Nu, self.Nz, self.N))
-            for k in range(self.K):  # for every line k
-                for iu in range(self.Nu):  # consider all possible control options
-                    for iz in range(self.Nz):  # consider all possible measurements
-                        for j in range(self.N):  # consider all possible states
-                            # Calculate values v(k, iu, iz, j)
-                            v[k, iu, iz, j] = self.Y[k, 1]*self.pz[iz, 0]*self.pt[0, j] + self.Y[k, 2]*self.pz[iz, 1]*self.pt[1, j]
-            # calculate linear constraints of new value function
-            for iu in range(self.Nu):  # consider all possible control options
-                # For our problem, there are Nz = 2 nested loops from 1: K
-                for k1 in range(self.K):
-                    for k2 in range(self.K):
-                        ypr_temp = np.zeros((1,self.N + 1))
-                        ypr_temp[0] = iu
-                        for i in range(self.N):
-                            pass
-                            # Calculate end points of new set of linear functions vpr(1) and vpr(2)
-                            # ypr_temp(i+1) = self.gamma * (self.r[i,iu] + )
-                        # Ypr = []  # Augment Ypr
-            # Prune unnecessary linear functions
-            self.Prune(Ypr)
-
-            # Assign pruned linear functions to final set
-            self.Y = Ypr
-
-            # Plot current linear function set
+            self.Sense()
+            self.Propogate()
             self.Visualize()
 
-    def Prune(self, Ypr):
-        # self.K = None
+    def Sense(self):
+        Ypr1 = self.Y @ self.pz[:, 0].reshape(-1, 1)
+        Ypr2 = self.Y @ self.pz[:, 1].reshape(-1, 1)
         pass
 
+    def Prediction(self):
+        pass
+
+    def Prune(self):
+        probs = np.vstack([np.arange(0, 1, self.pruning_res), np.arange(1, 0, self.pruning_res)])
+        lines = self.Y @ probs
+        index = np.unique(np.argmax(lines))
+        self.Y = self.Y[index]
+        self.K = np.shape(self.Y)[0]
+
     def Visualize(self):
+        plt.title('Value Functions')
+        plt.ylabel('Reward (r)')
+        plt.xlabel('Belief in State 1 (b(x1))')
         for i in range(self.K):
-            pass
-            # plt.plot([0, self.Y[]],)
+            plt.plot([self.Y[i, 2], self.Y[i, 1]], 'r-')
+
 
