@@ -26,13 +26,14 @@ class POMDP:
         self.pt = np.array([[0.2, 0.8], [0.8, 0.2]])  # transition probabilities pt(x_i ' | x_j, u_iu)
         self.pz = np.array([[0.7, 0.3], [0.3, 0.7]])  # measurement probabilites px(z_iz | x_j)
 
-        self.K = 1  # number of linear constraint functions
+        self.K = 3  # number of linear constraint functions
         self.cost = 0  # cost accrued
         self.p1 = 0.5  # initial belief of state being x1
-        self.Y = np.zeros((self.K, 1+self.N))
+        # self.Y = np.zeros((self.K, self.N))
+        self.Y = self.r[:,:-1].transpose()
 
         # self.Y0 = np.array([[0, self.r[1, 0], self.r[0, 0]], [1, self.r[1, 1], self.r[0, 1]]])
-        self.Y0 = np.hstack((np.array([[1], [2]]), self.r[0, 0:self.N].reshape(-1, 1), self.r[1, 0:self.N].reshape(-1, 1)))
+        self.Y0 = np.hstack((self.r[0, 0:self.N].reshape(-1, 1), self.r[1, 0:self.N].reshape(-1, 1)))
 
         self.pruning_res = 0.01
         pass
@@ -44,9 +45,11 @@ class POMDP:
             self.Visualize()
 
     def Sense(self):
-        Ypr1 = self.Y @ self.pz[:, 0].reshape(-1, 1)
-        Ypr2 = self.Y @ self.pz[:, 1].reshape(-1, 1)
-        pass
+        Ypr1 = np.multiply(self.Y, self.pz[:, 0])
+        Ypr2 = np.multiply(self.Y, self.pz[:, 1])
+        rng = np.arange(0, len(self.Y))
+        combos = np.vstack((np.tile(rng, len(self.Y)), np.repeat(rng, len(self.Y))))
+        self.Y = Ypr1[combos[0, :]] + Ypr2[combos[1, :]]
 
     def Prediction(self):
         pass
