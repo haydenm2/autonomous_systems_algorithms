@@ -67,7 +67,7 @@ if __name__ == "__main__":
     ukf = UKF(twr.c, twr.nl)
 
     body_radius = 0.3
-    # fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
+    fig, lines, lines_est, msensor, robot_body, robot_head = InitPlot(twr, body_radius)
     mu = ukf.mu
     K = ukf.K
     two_sig_x = np.array([[2 * np.sqrt(ukf.cov.item((0, 0)))], [-2 * np.sqrt(ukf.cov.item((0, 0)))]])
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         K = np.hstack((K, ukf.K))
         # zpos = np.hstack((zpos, twr.Getzpos())) # Historical sensor plotting
         zpos = twr.Getzpos() # Immediate sensor plotting
-        # UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos)
+        UpdatePlot(fig, lines, lines_est, msensor, robot_body, body_radius, robot_head, twr, mu, zpos)
         two_sig_x = np.hstack((two_sig_x, np.array([[2 * np.sqrt(ukf.cov.item((0, 0)))], [-2 * np.sqrt(ukf.cov.item((0, 0)))]])))
         two_sig_y = np.hstack((two_sig_y, np.array([[2 * np.sqrt(ukf.cov.item((1, 1)))], [-2 * np.sqrt(ukf.cov.item((1, 1)))]])))
         two_sig_theta = np.hstack((two_sig_theta, np.array([[2 * np.sqrt(ukf.cov.item((2, 2)))], [-2 * np.sqrt(ukf.cov.item((2, 2)))]])))

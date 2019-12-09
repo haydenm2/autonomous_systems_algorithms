@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 
 # Generic Partially Observable Markov Decision Process Model (From Probablistic Robotics)
 
+# Scenario:
+# Robot exists in a dilemma of either driving through a door on one side or a pit of lava on the other.
+# Robot can either choose to drive forward, drive backward, or turn around and sense for more information.
+# Probability that turning command results in no motion as well as probability of sensing wrong direction.
+# Robot seeks for optimal likelihood command to result in the highest score.
+
 class POMDP:
     def __init__(self, t=20):
         self.T = t  # time horizon
